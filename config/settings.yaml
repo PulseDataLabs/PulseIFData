@@ -53,5 +53,5 @@ normalization:
   cosif_mapping: "config/cosif_de_para.csv"
   output:
     dir: "data/processed"
-    filename: "ifdata_historical_10y.csv"
+    filename: "ifdata_historical.csv"
     consolidated: "ifdata_consolidated.csv"

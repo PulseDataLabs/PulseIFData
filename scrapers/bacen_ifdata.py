@@ -44,7 +44,7 @@ class BacenIfdataScraper(BaseScraper):
         self.extraction = settings.get("extraction", {})
         self.odata_cfg = settings.get("odata", {})
 
-        root_dir = Path(__file__).resolve().parents[2]
+        root_dir = Path(__file__).resolve().parent.parent
         self.raw_dir = root_dir / "data" / "raw"
         self.raw_dir.mkdir(parents=True, exist_ok=True)
 

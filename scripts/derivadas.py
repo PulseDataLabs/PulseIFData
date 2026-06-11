@@ -160,7 +160,7 @@ def gerar_tudo(
 ) -> dict[str, pd.DataFrame]:
     banner("Métricas Derivadas")
 
-    input_path = data_processed_dir / "ifdata_historical_10y.csv"
+    input_path = data_processed_dir / "ifdata_historical.csv"
     if not input_path.exists():
         log.warning(f"Arquivo processado não encontrado: {input_path}")
         return {}

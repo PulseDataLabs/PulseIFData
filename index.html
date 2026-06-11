@@ -459,6 +459,7 @@
     <li><a href="#datasets">Datasets</a></li>
     <li><a href="#schema">Schema</a></li>
     <li><a href="#setup">Instalação</a></li>
+    <li><a href="consulta.html">Consulta</a></li>
   </ul>
 
   <div class="nav-right">
@@ -605,7 +606,7 @@
         <div class="step-num">04</div>
         <div class="step-body">
           <h3>Geração de métricas derivadas</h3>
-          <p>Sobre a série consolidada (<code>ifdata_historical_10y.csv</code>): market share por IF e segmento, HHI de concentração (0–10000), rankings por ativo total e carteira, variações QoQ e YoY.</p>
+          <p>Sobre a série consolidada (<code>ifdata_historical.csv</code>): market share por IF e segmento, HHI de concentração (0–10000), rankings por ativo total e carteira, variações QoQ e YoY.</p>
           <span class="tag">derivadas.py · 4 datasets gerados</span>
         </div>
       </div>
@@ -818,7 +819,7 @@
 BASE = <span class="cm">"https://raw.githubusercontent.com/PulseDataLabs/PulseIFData/main/"</span>
 
 <span class="cm"># Série histórica consolidada (10+ anos)</span>
-df = pd.read_csv(BASE + <span class="cm">"data/processed/ifdata_historical_10y.csv"</span>)
+df = pd.read_csv(BASE + <span class="cm">"data/processed/ifdata_historical.csv"</span>)
 
 <span class="cm"># Rankings mais recentes</span>
 df_rank = pd.read_csv(BASE + <span class="cm">"data/derivadas_rankings.csv"</span>)</pre>
@@ -901,8 +902,8 @@ function applyStatus(st) {
 const BASE_URL = 'https://raw.githubusercontent.com/PulseDataLabs/PulseIFData/main/';
 const DS = [
   {
-    name: 'ifdata_historical_10y.csv',
-    path: 'data/processed/ifdata_historical_10y.csv',
+    name: 'ifdata_historical.csv',
+    path: 'data/processed/ifdata_historical.csv',
     desc: 'Série histórica consolidada — pivot semântico Cosif, ROE/ROA/NIM calculados',
     freq: 'Trimestral', src: 'SCR + Cosif', cat: 'balanco'
   },

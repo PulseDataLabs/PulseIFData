@@ -63,3 +63,5 @@ Thumbs.db
 data/bacen_ifdata*.csv
 data/schemas.json
 data/last_updates.*
+data/raw/ifdata_rel*.csv
+data/processed/ifdata_historical.csv

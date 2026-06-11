@@ -192,10 +192,17 @@ def normalizar(
 ) -> pd.DataFrame:
     section("Normalização: raw → processed (pivot semântico)")
 
+    consolidated_path = raw_dir.parent / "bacen_ifdata.csv"
     raw_files = sorted(raw_dir.glob("ifdata_rel*.csv"))
+
     if not raw_files:
-        log.warning(f"Nenhum arquivo bruto em {raw_dir}")
-        return pd.DataFrame()
+        if consolidated_path.exists():
+            log.info(f"Checkpoints ausentes — lendo consolidado: {consolidated_path}")
+            raw_files = [consolidated_path]
+        else:
+            log.warning(f"Nenhum arquivo bruto em {raw_dir} e nem consolidado")
+            log.info("Execute a extração primeiro: python run_all.py --scraper-only")
+            return pd.DataFrame()
 
     log.info(f"Lendo {len(raw_files)} arquivos brutos")
 

@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PulseIFData — Consulta</title>
+  <meta name="description" content="Consulte instituições financeiras do IFData/BACEN: cadastro, balanço, indicadores e derivadas." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/2.2.2/css/dataTables.dataTables.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/2.2.2/css/dataTables.bootstrap5.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/select/3.1.3/css/select.dataTables.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:        #0d1117;
+      --bg-2:      #161b22;
+      --bg-3:      #21262d;
+      --border:    #30363d;
+      --border-2:  #21262d;
+      --text:      #e6edf3;
+      --text-2:    #8b949e;
+      --text-3:    #484f58;
+      --green:     #3fb950;
+      --green-dim: #238636;
+      --green-bg:  rgba(35,134,54,.15);
+      --accent:    #58a6ff;
+      --warn:      #d29922;
+      --warn-bg:   rgba(210,153,34,.12);
+      --red:       #f85149;
+      --mono:      'JetBrains Mono', monospace;
+      --sans:      'Inter', system-ui, sans-serif;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--sans); font-size: 14px; line-height: 1.65;
+      color: var(--text); background: var(--bg); -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      height: 56px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+      background: rgba(13,17,23,.92); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-family: var(--mono); font-size: 14px; font-weight: 600;
+      color: var(--text); text-decoration: none;
+    }
+    .nav-logo:hover { text-decoration: none; }
+    .logo-icon {
+      width: 28px; height: 28px; border-radius: 6px;
+      background: var(--green-dim);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .logo-icon svg { width: 18px; height: 18px; }
+    .nav-links { display: flex; align-items: center; gap: 4px; list-style: none; }
+    .nav-links a {
+      font-size: 13px; color: var(--text-2); padding: 4px 10px; border-radius: 6px;
+      transition: color .15s, background .15s;
+    }
+    .nav-links a:hover { color: var(--text); background: var(--bg-3); text-decoration: none; }
+    .nav-links a.active { color: var(--green); background: var(--green-bg); }
+    .nav-right { display: flex; align-items: center; gap: 8px; }
+
+    .container { max-width: 1280px; margin: 0 auto; padding: 2rem 24px; }
+    .page-title { margin-bottom: 1.5rem; }
+    .page-title h1 {
+      font-family: var(--mono); font-size: 1.5rem; font-weight: 600;
+      color: var(--text); letter-spacing: -.02em;
+    }
+    .page-title h1 .accent { color: var(--green); }
+    .page-title p { color: var(--text-2); font-size: 13px; margin-top: .25rem; }
+
+    .filters {
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;
+      margin-bottom: 1.5rem; padding: 1rem 1.25rem;
+      background: var(--bg-2); border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .filter-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px; }
+    .filter-group label {
+      font-family: var(--mono); font-size: 10px; font-weight: 600;
+      color: var(--text-3); text-transform: uppercase; letter-spacing: .08em;
+    }
+    .filter-group input, .filter-group select {
+      font-family: var(--mono); font-size: 13px; color: var(--text);
+      background: var(--bg-3); border: 1px solid var(--border);
+      border-radius: 6px; padding: 6px 10px; width: 100%;
+    }
+    .filter-group input:focus, .filter-group select:focus {
+      outline: none; border-color: var(--green); box-shadow: 0 0 0 2px var(--green-bg);
+    }
+    .filter-actions { display: flex; gap: 6px; align-items: flex-end; }
+    .btn {
+      font-family: var(--mono); font-size: 12px; font-weight: 600;
+      border-radius: 6px; padding: 7px 14px; border: none; cursor: pointer;
+      transition: all .15s; white-space: nowrap;
+    }
+    .btn-primary { color: #fff; background: var(--green-dim); }
+    .btn-primary:hover { background: #2ea043; }
+    .btn-outline { color: var(--text-2); background: var(--bg-3); border: 1px solid var(--border); }
+    .btn-outline:hover { color: var(--text); background: var(--bg-3); border-color: var(--text-3); }
+
+    .table-wrap {
+      border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+      background: var(--bg-2);
+    }
+    #tabela-dados { width: 100% !important; }
+    #tabela-dados thead th {
+      font-family: var(--mono); font-size: 10px; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); text-align: left;
+      padding: .6rem .75rem; background: var(--bg-3); border-bottom: 1px solid var(--border);
+    }
+    #tabela-dados tbody td {
+      padding: .5rem .75rem; font-size: 12px; vertical-align: middle;
+      border-bottom: 1px solid var(--border-2);
+    }
+    #tabela-dados tbody tr:hover { background: var(--bg-3); }
+    #tabela-dados .num { font-family: var(--mono); text-align: right; }
+    #tabela-dados .cod { font-family: var(--mono); color: var(--green); }
+    #tabela-dados .nome { font-weight: 500; }
+    #tabela-dados .seg {
+      display: inline-block; font-family: var(--mono); font-size: 10px; font-weight: 600;
+      background: var(--green-bg); color: var(--green);
+      border: 1px solid rgba(63,185,80,.25); border-radius: 4px; padding: 1px 6px;
+    }
+
+    .dt-layout-row { margin: 0 !important; padding: 0 !important; }
+    .dt-container .dt-layout-row.dt-layout-table .dt-layout-cell { padding: 0 !important; }
+    .dt-container { padding: 0 !important; }
+    .dt-info {
+      font-family: var(--mono); font-size: 11px; color: var(--text-3) !important;
+      padding: .75rem 1rem !important;
+    }
+    .dt-paging { padding: .75rem 1rem !important; }
+    .dt-paging a {
+      font-family: var(--mono); font-size: 12px; color: var(--text-2) !important;
+      background: var(--bg-3) !important; border: 1px solid var(--border) !important;
+      border-radius: 4px !important; padding: 4px 10px !important; margin: 0 2px !important;
+    }
+    .dt-paging a:hover { color: var(--text) !important; border-color: var(--text-3) !important; }
+    .dt-paging .current {
+      color: var(--green) !important; background: var(--green-bg) !important;
+      border-color: rgba(63,185,80,.4) !important;
+    }
+    .dt-search {
+      padding: .75rem 1rem !important;
+    }
+    .dt-search label {
+      font-family: var(--mono); font-size: 11px; color: var(--text-3); display: flex; align-items: center; gap: 6px;
+    }
+    .dt-search input {
+      font-family: var(--mono); font-size: 12px; color: var(--text);
+      background: var(--bg-3); border: 1px solid var(--border);
+      border-radius: 4px; padding: 4px 8px;
+    }
+    .dt-search input:focus { outline: none; border-color: var(--green); }
+
+    footer {
+      border-top: 1px solid var(--border); background: var(--bg-2);
+      padding: 1.5rem 24px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+    }
+    .footer-l { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 11px; color: var(--text-3); }
+    .footer-l a { color: var(--text-2); }
+    .footer-l a:hover { color: var(--green); }
+    .footer-links { display: flex; gap: 1.25rem; list-style: none; }
+    .footer-links a { font-size: 12px; color: var(--text-3); }
+    .footer-links a:hover { color: var(--green); text-decoration: none; }
+
+    .stats-row {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 8px; margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: var(--bg-2); border: 1px solid var(--border); border-radius: 8px;
+      padding: 1rem 1.25rem; text-align: center;
+    }
+    .stat-card .v {
+      display: block; font-family: var(--mono); font-size: 1.25rem; font-weight: 600;
+      color: var(--green); letter-spacing: -.02em;
+    }
+    .stat-card .l {
+      font-size: 10px; color: var(--text-3); text-transform: uppercase;
+      letter-spacing: .07em; margin-top: 2px;
+    }
+
+    .loading {
+      text-align: center; padding: 3rem; color: var(--text-3);
+      font-family: var(--mono); font-size: 13px;
+    }
+    .loading .spinner {
+      display: inline-block; width: 24px; height: 24px;
+      border: 2px solid var(--border); border-top-color: var(--green);
+      border-radius: 50%; animation: sp .8s linear infinite; margin-bottom: .75rem;
+    }
+    @keyframes sp { to { transform: rotate(360deg); } }
+    .error-box {
+      background: rgba(248,81,73,.1); border: 1px solid rgba(248,81,73,.3);
+      border-radius: 8px; padding: 1.5rem; text-align: center; color: var(--red);
+      font-family: var(--mono); font-size: 13px;
+    }
+    .warning-box {
+      background: var(--warn-bg); border: 1px solid rgba(210,153,34,.3);
+      border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem;
+      color: var(--warn); font-size: 13px;
+    }
+
+    @media (max-width:720px) {
+      .nav-links { display: none; }
+      .container { padding: 1rem 12px; }
+      .filters { flex-direction: column; }
+      .filter-group { min-width: 100%; }
+      .stats-row { grid-template-columns: repeat(2,1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">
+    <span class="logo-icon">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M10 2L2 6.5H18L10 2Z" fill="rgba(255,255,255,0.9)"/>
+        <rect x="2" y="15.5" width="16" height="2" rx=".5" fill="rgba(255,255,255,0.9)"/>
+        <rect x="3.5" y="7" width="2" height="8" rx=".4" fill="rgba(255,255,255,0.75)"/>
+        <rect x="7"   y="7" width="2" height="8" rx=".4" fill="rgba(255,255,255,0.75)"/>
+        <rect x="10.5" y="7" width="2" height="8" rx=".4" fill="rgba(255,255,255,0.75)"/>
+        <rect x="14" y="7" width="2" height="8" rx=".4" fill="rgba(255,255,255,0.75)"/>
+        <polyline points="5,5.5 8,4 11,4.8 15,3" stroke="#3fb950" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </span>
+    PulseIFData
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html">Dashboard</a></li>
+    <li><a href="consulta.html" class="active">Consulta</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="https://github.com/PulseDataLabs/PulseIFData" target="_blank" rel="noopener" style="font-size:12px;color:var(--text-3)">GitHub ↗</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="page-title">
+    <h1>Consulta <span class="accent">IFData</span></h1>
+    <p>Pesquise instituições financeiras, visualize balanço, indicadores e derivadas — dados públicos do BACEN</p>
+  </div>
+
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card"><span class="v" id="st-if">—</span><span class="l">Instituições</span></div>
+    <div class="stat-card"><span class="v" id="st-periodos">—</span><span class="l">Períodos</span></div>
+    <div class="stat-card"><span class="v" id="st-registros">—</span><span class="l">Registros</span></div>
+    <div class="stat-card"><span class="v" id="st-segmentos">—</span><span class="l">Segmentos</span></div>
+  </div>
+
+  <div class="warning-box">
+    Dados carregados via GitHub Raw — podem levar alguns segundos para datasets grandes.
+    Use os filtros abaixo para refinar a busca antes de carregar.
+  </div>
+
+  <div class="filters">
+    <div class="filter-group">
+      <label>Dataset</label>
+      <select id="filtro-dataset">
+        <option value="historico">Série Histórica (balanço + indicadores)</option>
+        <option value="cadastro">Cadastro de IFs</option>
+        <option value="rankings">Rankings</option>
+        <option value="market-share">Market Share</option>
+        <option value="hhi">HHI Concentração</option>
+        <option value="var">Variações QoQ/YoY</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Instituição (nome ou código)</label>
+      <input type="text" id="filtro-inst" placeholder="Ex: Itaú, 60701190, Bradesco…" />
+    </div>
+    <div class="filter-group">
+      <label>Segmento</label>
+      <select id="filtro-segmento">
+        <option value="">Todos</option>
+        <option value="S1">S1</option>
+        <option value="S2">S2</option>
+        <option value="S3">S3</option>
+        <option value="S4">S4</option>
+        <option value="S5">S5</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Período (AnoMes)</label>
+      <input type="text" id="filtro-periodo" placeholder="Ex: 202412" />
+    </div>
+    <div class="filter-actions">
+      <button class="btn btn-primary" onclick="carregarDados()">Carregar</button>
+      <button class="btn btn-outline" onclick="limparFiltros()">Limpar</button>
+    </div>
+  </div>
+
+  <div id="tabela-container">
+    <div class="loading">
+      <div class="spinner"></div>
+      <div>Carregando dados…</div>
+      <div style="font-size:11px;margin-top:6px;color:var(--text-3)">Selecione um dataset e clique em "Carregar"</div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-l">
+    <span>© 2026 <a href="https://pulsedatalabs.github.io">PulseDataLabs</a></span>
+    <span style="color:var(--border)">·</span>
+    <span>Dados públicos do <a href="https://www3.bcb.gov.br/ifdata/" target="_blank" rel="noopener">IFData/BACEN</a> — ODbL · Código MIT</span>
+  </div>
+  <ul class="footer-links">
+    <li><a href="https://pulsedatalabs.github.io/PulseFlat/">PulseFlat</a></li>
+    <li><a href="https://pulsedatalabs.github.io/PulseRatingsBrasil/">PulseRatings</a></li>
+    <li><a href="https://github.com/PulseDataLabs/PulseIFData" target="_blank" rel="noopener">GitHub</a></li>
+  </ul>
+</footer>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/2.2.2/js/dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/select/3.1.3/js/dataTables.select.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.6.0/papaparse.min.js"></script>
+
+<script>
+const BASE = 'https://raw.githubusercontent.com/PulseDataLabs/PulseIFData/main/';
+const DATASETS = {
+  'historico':   { url: BASE + 'data/processed/ifdata_historical.csv', label: 'Série Histórica' },
+  'cadastro':    { url: BASE + 'data/cadastro_ifs.csv', label: 'Cadastro IFs' },
+  'rankings':    { url: BASE + 'data/derivadas_rankings.csv', label: 'Rankings' },
+  'market-share':{ url: BASE + 'data/derivadas_market_share.csv', label: 'Market Share' },
+  'hhi':         { url: BASE + 'data/derivadas_hhi.csv', label: 'HHI' },
+  'var':         { url: BASE + 'data/derivadas_var.csv', label: 'Variações' },
+};
+
+let dt = null;
+let dadosBrutos = [];
+
+function limparFiltros() {
+  document.getElementById('filtro-inst').value = '';
+  document.getElementById('filtro-segmento').value = '';
+  document.getElementById('filtro-periodo').value = '';
+  if (dt) dt.search('').columns().search('').draw();
+}
+
+function getColDefs(key) {
+  const defs = {
+    'historico': [
+      { data: 'data_base', title: 'Data Base' },
+      { data: 'AnoMes', title: 'Período' },
+      { data: 'CodInst', title: 'Código' },
+      { data: 'NomeInstituicao', title: 'Instituição' },
+      { data: 'Segmento', title: 'Segmento' },
+      { data: 'UF', title: 'UF' },
+      { data: 'ativo_total', title: 'Ativo Total', render: v => v ? parseFloat(v).toLocaleString('pt-BR',{maximumFractionDigits:0}) : '-' },
+      { data: 'carteira_credito', title: 'Carteira Crédito', render: v => v ? parseFloat(v).toLocaleString('pt-BR',{maximumFractionDigits:0}) : '-' },
+      { data: 'patrimonio_liquido', title: 'PL', render: v => v ? parseFloat(v).toLocaleString('pt-BR',{maximumFractionDigits:0}) : '-' },
+      { data: 'lucro_liquido', title: 'Lucro Líq.', render: v => v ? parseFloat(v).toLocaleString('pt-BR',{maximumFractionDigits:0}) : '-' },
+      { data: 'roe_anualizado', title: 'ROE', render: v => v ? (parseFloat(v)*100).toFixed(1)+'%' : '-' },
+      { data: 'roa_anualizado', title: 'ROA', render: v => v ? (parseFloat(v)*100).toFixed(2)+'%' : '-' },
+    ],
+    'cadastro': [
+      { data: 'CodInst', title: 'Código' },
+      { data: 'NomeInstituicao', title: 'Instituição' },
+      { data: 'Segmento', title: 'Segmento' },
+      { data: 'UF', title: 'UF' },
+      { data: 'AnoMes', title: 'Período' },
+    ],
+    'rankings': [
+      { data: 'data_base', title: 'Data Base' },
+      { data: 'CodInst', title: 'Código' },
+      { data: 'NomeInstituicao', title: 'Instituição' },
+      { data: 'ranking_ativo', title: 'Rank Ativo' },
+      { data: 'ranking_carteira', title: 'Rank Carteira' },
+      { data: 'Segmento', title: 'Segmento' },
+    ],
+  };
+  return defs[key] || [];
+}
+
+function atualizarStats(data, key) {
+  const ifs = new Set();
+  const periodos = new Set();
+  const segmentos = new Set();
+  data.forEach(r => {
+    if (r.CodInst) ifs.add(r.CodInst);
+    if (r.AnoMes) periodos.add(r.AnoMes);
+    if (r.data_base) periodos.add(r.data_base);
+    if (r.Segmento) segmentos.add(r.Segmento);
+  });
+  document.getElementById('st-if').textContent = ifs.size.toLocaleString('pt-BR');
+  document.getElementById('st-periodos').textContent = periodos.size.toLocaleString('pt-BR');
+  document.getElementById('st-registros').textContent = data.length.toLocaleString('pt-BR');
+  document.getElementById('st-segmentos').textContent = segmentos.size || '—';
+}
+
+function carregarDados() {
+  const key = document.getElementById('filtro-dataset').value;
+  const dataset = DATASETS[key];
+  if (!dataset) return;
+
+  const container = document.getElementById('tabela-container');
+  container.innerHTML = `<div class="loading"><div class="spinner"></div><div>Carregando ${dataset.label}…</div></div>`;
+
+  if (dt) { dt.destroy(); dt = null; }
+
+  $.get(dataset.url + '?t=' + Date.now(), function(csvText) {
+    Papa.parse(csvText, {
+      header: true,
+      dynamicTyping: false,
+      skipEmptyLines: true,
+      complete: function(results) {
+        dadosBrutos = results.data.filter(r => r.CodInst || r.cod_inst);
+        if (dadosBrutos.length === 0) {
+          container.innerHTML = '<div class="error-box">Nenhum dado encontrado. O dataset pode estar vazio ou indisponível.</div>';
+          return;
+        }
+        dadosBrutos.forEach(r => {
+          if (r.cod_inst && !r.CodInst) r.CodInst = r.cod_inst;
+          if (r.nome_if && !r.NomeInstituicao) r.NomeInstituicao = r.nome_if;
+        });
+
+        const instFilter = document.getElementById('filtro-inst').value.trim().toLowerCase();
+        const segFilter = document.getElementById('filtro-segmento').value;
+        const perFilter = document.getElementById('filtro-periodo').value.trim();
+
+        let filtered = dadosBrutos;
+        if (instFilter) {
+          filtered = filtered.filter(r =>
+            (r.NomeInstituicao || '').toLowerCase().includes(instFilter) ||
+            (r.CodInst || '').includes(instFilter)
+          );
+        }
+        if (segFilter) {
+          filtered = filtered.filter(r => (r.Segmento || '') === segFilter);
+        }
+        if (perFilter) {
+          filtered = filtered.filter(r =>
+            (r.AnoMes || '').includes(perFilter) ||
+            (r.data_base || '').includes(perFilter)
+          );
+        }
+
+        atualizarStats(filtered, key);
+        const colDefs = getColDefs(key);
+        const cols = colDefs.length ? colDefs : Object.keys(filtered[0]).map(k => ({ data: k, title: k }));
+
+        container.innerHTML = '<div class="table-wrap"><table id="tabela-dados" class="display nowrap" style="width:100%"></table></div>';
+
+        dt = new DataTable('#tabela-dados', {
+          data: filtered,
+          columns: cols,
+          pageLength: 50,
+          lengthMenu: [[25, 50, 100, 250, -1], [25, 50, 100, 250, 'Todos']],
+          order: [],
+          scrollX: true,
+          language: {
+            url: 'https://cdn.datatables.net/plug-ins/2.2.2/i18n/pt-BR.json',
+            search: 'Pesquisar:',
+            lengthMenu: '_MENU_ por página',
+            info: '_START_–_END_ de _TOTAL_ registros',
+            infoEmpty: '0 registros',
+            infoFiltered: '(filtrado de _MAX_ registros)',
+          },
+          createdRow: function(row, data) {
+            if (data.CodInst) $(row).find('td:eq(0)').addClass('cod');
+          }
+        });
+      },
+      error: function(err) {
+        container.innerHTML = `<div class="error-box">Erro ao carregar dados: ${err}</div>`;
+      }
+    });
+  }).fail(function(jqXHR, textStatus, err) {
+    container.innerHTML = `<div class="error-box">Erro HTTP ao carregar dataset: ${textStatus}${err ? ' — ' + err : ''}</div>`;
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('filtro-inst').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') carregarDados();
+  });
+  document.getElementById('filtro-periodo').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') carregarDados();
+  });
+  carregarDados();
+});
+</script>
+</body>
+</html>
