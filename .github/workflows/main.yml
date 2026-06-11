@@ -1,0 +1,76 @@
+name: Coleta e Atualizacao IFData
+
+on:
+  schedule:
+    - cron: '0 10 * * 1-5'
+  workflow_dispatch:
+
+concurrency:
+  group: pipeline-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - run: sudo timedatectl set-timezone America/Sao_Paulo
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - run: pip install -r requirements.txt
+
+      - name: Extrair dados IFData
+        run: python run_all.py --scraper-only --sequential
+        continue-on-error: true
+        timeout-minutes: 120
+
+      - name: Normalizar e enriquecer
+        run: |
+          python run_all.py --normalize-only || true
+          python scripts/enriquecer_cadastro.py || true
+        continue-on-error: true
+
+      - name: Métricas derivadas e catálogo
+        run: |
+          python run_all.py --derivadas-only || true
+          python run_all.py --generate-catalog || true
+        continue-on-error: true
+
+      - name: Gerar pipeline_status.js para o dashboard
+        run: python run_all.py || true
+
+      - name: Configurar git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commitar dados atualizados
+        run: |
+          git add data/ config/
+          git diff --cached --quiet || \
+            git commit -m "Bot: Atualizacao IFData - $(date +'%Y-%m-%d')"
+
+      - name: Push
+        run: git push origin main
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

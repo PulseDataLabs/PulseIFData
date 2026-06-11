@@ -1,0 +1,57 @@
+odata:
+  base_url: "https://olinda.bcb.gov.br/olinda/servico/IFDATA/versao/v1/odata"
+  endpoints:
+    valores: "IfDataValores(AnoMes=@AnoMes,TipoInstituicao=@TipoInstituicao,Relatorio=@Relatorio)"
+    cadastro: "IfDataCadastro(AnoMes=@AnoMes)"
+    relatorios: "ListaDeRelatorio()"
+
+extraction:
+  pagination:
+    top: 5000
+    max_retries: 3
+    retry_delay: 5
+  rate_limit: 1.0
+
+  reports:
+    - id: "1"
+      name: "Resumo"
+    - id: "2"
+      name: "Ativo"
+    - id: "3"
+      name: "Passivo"
+    - id: "4"
+      name: "Demonstracao de Resultado"
+    - id: "5"
+      name: "Informacoes de Capital"
+    - id: "6"
+      name: "Segmentacao"
+    - id: "7"
+      name: "Carteira de Credito Ativa - Por indexador"
+    - id: "8"
+      name: "Carteira de Credito Ativa - por nivel de risco"
+    - id: "9"
+      name: "Carteira de Credito Ativa - por regiao geografica"
+    - id: "11"
+      name: "Carteira de Credito PF - modalidade e prazo"
+    - id: "13"
+      name: "Carteira de Credito PJ - modalidade e prazo"
+
+  institution_types:
+    - codigo: 1
+      label: "conglomerados_prudenciais"
+    - codigo: 2
+      label: "conglomerados_financeiros"
+    - codigo: 3
+      label: "instituicoes_individuais"
+
+  time_range:
+    start_year: 2014
+    start_month: 3
+    quarters: [3, 6, 9, 12]
+
+normalization:
+  cosif_mapping: "config/cosif_de_para.csv"
+  output:
+    dir: "data/processed"
+    filename: "ifdata_historical_10y.csv"
+    consolidated: "ifdata_consolidated.csv"

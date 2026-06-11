@@ -1,0 +1,6 @@
+requests
+pandas
+pyyaml
+python-dotenv
+pytest
+requests-mock

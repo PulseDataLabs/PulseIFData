@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PulseIFData — Inteligência do Sistema Financeiro Nacional</title>
+  <meta name="description" content="Dados do IFData/BACEN estruturados, enriquecidos e entregues para uso institucional. Histórico trimestral desde 2000, schema normalizado, dashboard e API." />
+  <meta property="og:title" content="PulseIFData — Inteligência do Sistema Financeiro Nacional" />
+  <meta property="og:description" content="Pipeline automatizado sobre o IFData do Banco Central — SCR e Cosif normalizados, métricas derivadas e dashboard de análise competitiva do SFN." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://pulsedatalabs.github.io/PulseIFData/" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green-900: #04342C;
+      --green-800: #085041;
+      --green-700: #0F6E56;
+      --green-600: #1D9E75;
+      --green-400: #5DCAA5;
+      --green-200: #9FE1CB;
+      --green-100: #C8EDDF;
+      --green-50:  #E1F5EE;
+
+      --gray-950: #111310;
+      --gray-900: #1A1C19;
+      --gray-800: #252722;
+      --gray-700: #333530;
+      --gray-500: #5C5E59;
+      --gray-400: #888780;
+      --gray-200: #C8C6BD;
+      --gray-100: #E0DED7;
+      --gray-50:  #F2F0EA;
+
+      --text-primary: #111310;
+      --text-secondary: #5C5E59;
+      --text-muted: #888780;
+      --bg: #FAFAF8;
+      --surface: #FFFFFF;
+      --border: #E0DED7;
+      --border-soft: #EDECEA;
+
+      --font-mono: 'JetBrains Mono', 'Fira Mono', 'Courier New', monospace;
+      --font-body: 'Inter', system-ui, sans-serif;
+
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+
+      --nav-h: 56px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text-primary: #E8E6DE;
+        --text-secondary: #9E9C94;
+        --text-muted: #6B6963;
+        --bg: #111310;
+        --surface: #1A1C19;
+        --border: #2C2E29;
+        --border-soft: #222420;
+        --gray-50: #1A1C19;
+        --gray-100: #222420;
+      }
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--text-primary);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--green-700); text-decoration: none; }
+    a:hover { color: var(--green-600); }
+
+    /* ── Nav ──────────────────────────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      height: var(--nav-h);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem;
+      background: color-mix(in srgb, var(--bg) 90%, transparent);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 15px; font-weight: 600; color: var(--text-primary);
+      text-decoration: none;
+    }
+    .nav-logo .dot {
+      width: 26px; height: 26px; border-radius: 6px;
+      background: var(--green-700);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-logo .dot svg { width: 14px; height: 14px; fill: #fff; }
+
+    .nav-links {
+      display: flex; align-items: center; gap: 1.5rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 13px; color: var(--text-secondary);
+      transition: color .15s;
+    }
+    .nav-links a:hover { color: var(--text-primary); }
+
+    .nav-right { display: flex; align-items: center; gap: 8px; }
+
+    .status-pill {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px 10px;
+    }
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green-600);
+      animation: pulse-dot 2.4s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .4; }
+    }
+
+    .btn-github {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 500;
+      color: var(--text-primary);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 5px 12px;
+      transition: background .15s, border-color .15s;
+    }
+    .btn-github:hover { background: var(--gray-50); border-color: var(--gray-200); color: var(--text-primary); }
+    .btn-github svg { width: 14px; height: 14px; fill: currentColor; }
+
+    /* ── Hero ─────────────────────────────────────────────────── */
+    .hero {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 5rem 2rem 4rem;
+      text-align: center;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 500; letter-spacing: .06em;
+      color: var(--green-700);
+      background: var(--green-50);
+      border: 1px solid var(--green-200);
+      border-radius: 999px;
+      padding: 4px 12px;
+      margin-bottom: 1.5rem;
+    }
+    @media (prefers-color-scheme: dark) {
+      .hero-eyebrow { background: rgba(15,110,86,.15); border-color: rgba(93,202,165,.25); }
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -.025em;
+      line-height: 1.15;
+      color: var(--text-primary);
+      margin-bottom: .75rem;
+    }
+    .hero h1 em {
+      font-style: normal;
+      color: var(--green-700);
+    }
+
+    .hero-sub {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      max-width: 580px;
+      margin: 0 auto 2rem;
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      display: flex; align-items: center; justify-content: center;
+      flex-wrap: wrap; gap: 10px;
+    }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 14px; font-weight: 600;
+      color: #fff;
+      background: var(--green-700);
+      border: 1px solid var(--green-700);
+      border-radius: var(--radius-md);
+      padding: 9px 20px;
+      transition: background .15s;
+    }
+    .btn-primary:hover { background: var(--green-800); color: #fff; }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 14px; font-weight: 500;
+      color: var(--text-secondary);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 9px 20px;
+      transition: background .15s, border-color .15s;
+    }
+    .btn-secondary:hover { background: var(--gray-50); color: var(--text-primary); }
+
+    /* ── Stats bar ────────────────────────────────────────────── */
+    .stats-bar {
+      border-top: 1px solid var(--border-soft);
+      border-bottom: 1px solid var(--border-soft);
+      background: var(--surface);
+    }
+    .stats-inner {
+      max-width: 900px; margin: 0 auto;
+      display: flex; align-items: stretch;
+    }
+    .stat {
+      flex: 1;
+      padding: 1.25rem 1.5rem;
+      border-right: 1px solid var(--border-soft);
+      text-align: center;
+    }
+    .stat:last-child { border-right: none; }
+    .stat-value {
+      font-size: 1.5rem; font-weight: 700;
+      color: var(--green-700);
+      letter-spacing: -.02em;
+      display: block;
+    }
+    .stat-label {
+      font-size: 12px; color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ── Sections ─────────────────────────────────────────────── */
+    section { padding: 4rem 2rem; }
+    section + section { border-top: 1px solid var(--border-soft); }
+
+    .section-inner { max-width: 900px; margin: 0 auto; }
+
+    .section-header { margin-bottom: 2rem; }
+    .section-eyebrow {
+      font-size: 11px; font-weight: 600; letter-spacing: .1em;
+      color: var(--green-700); text-transform: uppercase;
+      margin-bottom: .4rem;
+    }
+    .section-header h2 {
+      font-size: 1.5rem; font-weight: 700;
+      letter-spacing: -.02em; color: var(--text-primary);
+    }
+    .section-header p {
+      font-size: 14px; color: var(--text-secondary);
+      margin-top: .4rem; max-width: 560px; line-height: 1.65;
+    }
+
+    /* ── Sobre ────────────────────────────────────────────────── */
+    .sobre-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 640px) { .sobre-grid { grid-template-columns: 1fr; } }
+
+    .sobre-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+    }
+    .sobre-card .sc-icon {
+      width: 32px; height: 32px; border-radius: var(--radius-md);
+      background: var(--green-50);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: .75rem;
+      font-size: 16px;
+    }
+    @media (prefers-color-scheme: dark) {
+      .sobre-card .sc-icon { background: rgba(15,110,86,.2); }
+    }
+    .sobre-card h3 {
+      font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: .3rem;
+    }
+    .sobre-card p {
+      font-size: 13px; color: var(--text-secondary); line-height: 1.55;
+    }
+
+    /* ── Pipeline ─────────────────────────────────────────────── */
+    .pipeline-steps {
+      display: flex; flex-direction: column; gap: 0;
+      position: relative;
+    }
+    .pipeline-step {
+      display: grid; grid-template-columns: 44px 1fr;
+      gap: 1rem; align-items: flex-start;
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .pipeline-step:last-child { border-bottom: none; }
+
+    .step-num {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--green-50);
+      border: 1px solid var(--green-200);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: var(--green-700);
+      flex-shrink: 0; margin-top: 2px;
+    }
+    @media (prefers-color-scheme: dark) {
+      .step-num { background: rgba(15,110,86,.2); border-color: rgba(93,202,165,.3); }
+    }
+    .step-body h3 {
+      font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: .25rem;
+    }
+    .step-body p {
+      font-size: 13px; color: var(--text-secondary); line-height: 1.55;
+    }
+    .step-tag {
+      display: inline-block; margin-top: .5rem;
+      font-size: 11px; font-weight: 500;
+      background: var(--gray-50); border: 1px solid var(--border);
+      border-radius: 999px; padding: 2px 8px;
+      color: var(--text-muted);
+    }
+
+    /* ── Agenda ────────────────────────────────────────────────── */
+    .agenda-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-top: 2rem;
+    }
+    .agenda-header {
+      padding: .75rem 1.25rem;
+      border-bottom: 1px solid var(--border-soft);
+      font-size: 12px; font-weight: 600; letter-spacing: .05em;
+      color: var(--text-muted); text-transform: uppercase;
+    }
+    .agenda-row {
+      display: flex; align-items: center; gap: 1rem;
+      padding: .75rem 1.25rem;
+      border-bottom: 1px solid var(--border-soft);
+      font-size: 13px;
+    }
+    .agenda-row:last-child { border-bottom: none; }
+    .agenda-time {
+      font-family: var(--font-mono);
+      font-size: 12px; font-weight: 600;
+      color: var(--green-700); min-width: 56px;
+    }
+    .agenda-label { color: var(--text-secondary); flex: 1; }
+    .agenda-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+    .agenda-tag {
+      font-size: 11px; font-weight: 500;
+      background: var(--green-50); color: var(--green-800);
+      border-radius: 999px; padding: 2px 8px;
+    }
+    @media (prefers-color-scheme: dark) {
+      .agenda-tag { background: rgba(15,110,86,.2); color: var(--green-400); }
+    }
+
+    /* ── Datasets ─────────────────────────────────────────────── */
+    .filter-bar {
+      display: flex; align-items: center; gap: 8px;
+      flex-wrap: wrap; margin-bottom: 1.25rem;
+    }
+    .filter-btn {
+      font-size: 12px; font-weight: 500;
+      color: var(--text-muted);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 999px; padding: 4px 12px;
+      cursor: pointer; transition: all .15s;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      background: var(--green-50); border-color: var(--green-400);
+      color: var(--green-800);
+    }
+    @media (prefers-color-scheme: dark) {
+      .filter-btn:hover, .filter-btn.active {
+        background: rgba(15,110,86,.2); border-color: rgba(93,202,165,.35);
+        color: var(--green-400);
+      }
+    }
+
+    .datasets-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 13px;
+    }
+    .datasets-table thead th {
+      font-size: 11px; font-weight: 600; letter-spacing: .07em;
+      color: var(--text-muted); text-transform: uppercase;
+      text-align: left;
+      padding: .5rem 1rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--gray-50);
+    }
+    .datasets-table tbody tr {
+      border-bottom: 1px solid var(--border-soft);
+      transition: background .1s;
+    }
+    .datasets-table tbody tr:last-child { border-bottom: none; }
+    .datasets-table tbody tr:hover { background: var(--gray-50); }
+    .datasets-table td { padding: .75rem 1rem; vertical-align: middle; }
+
+    .ds-name { font-weight: 600; color: var(--text-primary); }
+    .ds-desc { color: var(--text-secondary); }
+    .ds-freq {
+      font-size: 11px; font-weight: 500;
+      background: var(--green-50); color: var(--green-800);
+      border-radius: 999px; padding: 2px 8px; white-space: nowrap;
+    }
+    @media (prefers-color-scheme: dark) {
+      .ds-freq { background: rgba(15,110,86,.2); color: var(--green-400); }
+    }
+    .ds-source {
+      font-size: 11px; color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .dl-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 12px; font-weight: 500;
+      color: var(--green-700);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 4px 10px;
+      cursor: pointer; transition: all .15s; white-space: nowrap;
+    }
+    .dl-btn:hover {
+      background: var(--green-50);
+      border-color: var(--green-400);
+    }
+
+    .table-wrapper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      overflow-x: auto;
+    }
+
+    /* ── Schema ───────────────────────────────────────────────── */
+    .schema-tabs {
+      display: flex; gap: 4px; flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+    .schema-tab {
+      font-size: 13px; font-weight: 500;
+      color: var(--text-muted);
+      padding: .5rem 1rem;
+      cursor: pointer; border-bottom: 2px solid transparent;
+      margin-bottom: -1px; transition: color .15s;
+    }
+    .schema-tab:hover { color: var(--text-primary); }
+    .schema-tab.active {
+      color: var(--green-700);
+      border-bottom-color: var(--green-700);
+    }
+
+    .schema-table {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+    }
+    .schema-table thead th {
+      font-size: 11px; font-weight: 600; letter-spacing: .07em;
+      color: var(--text-muted); text-transform: uppercase;
+      text-align: left; padding: .5rem 1rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--gray-50);
+    }
+    .schema-table tbody tr { border-bottom: 1px solid var(--border-soft); }
+    .schema-table tbody tr:last-child { border-bottom: none; }
+    .schema-table td { padding: .65rem 1rem; vertical-align: top; }
+
+    .col-field {
+      font-family: var(--font-mono);
+      font-size: 12px; font-weight: 600;
+      color: var(--green-700);
+    }
+    .col-type {
+      font-family: var(--font-mono);
+      font-size: 11px; color: var(--text-muted);
+    }
+    .col-desc { font-size: 13px; color: var(--text-secondary); }
+
+    .schema-panel { display: none; }
+    .schema-panel.active { display: block; }
+
+    /* ── Setup ────────────────────────────────────────────────── */
+    .setup-steps {
+      display: flex; flex-direction: column; gap: 1px;
+      background: var(--border-soft);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+    .setup-step {
+      background: var(--surface);
+      padding: 1rem 1.5rem;
+      display: grid; grid-template-columns: 28px 1fr;
+      gap: 1rem; align-items: flex-start;
+    }
+    .ss-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--green-700); color: #fff;
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 2px;
+    }
+    .ss-body h4 {
+      font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: .2rem;
+    }
+    .ss-body p {
+      font-size: 13px; color: var(--text-secondary); line-height: 1.5;
+    }
+    code {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background: var(--gray-50);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 5px;
+      color: var(--text-primary);
+    }
+
+    .code-block {
+      background: var(--gray-900);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    @media (prefers-color-scheme: dark) {
+      .code-block { background: #0D0F0C; border: 1px solid var(--border); }
+    }
+    .code-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .6rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+    .code-lang {
+      font-size: 11px; font-weight: 600; letter-spacing: .06em;
+      color: #6B7A6B; text-transform: uppercase;
+    }
+    .code-copy {
+      font-size: 11px; color: #6B7A6B;
+      background: none; border: none; cursor: pointer;
+      transition: color .15s;
+    }
+    .code-copy:hover { color: var(--green-400); }
+    pre {
+      margin: 0; padding: 1.25rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 12px; line-height: 1.75;
+      color: #B8D4B8;
+      overflow-x: auto;
+    }
+    pre .comment { color: #4A6048; }
+    pre .cmd { color: #9FE1CB; }
+    pre .kw { color: #E1F5EE; }
+
+    /* ── Footer ───────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border-soft);
+      padding: 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+    }
+    .footer-left {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: var(--text-muted);
+    }
+    .footer-left a { color: var(--green-700); }
+    .footer-links {
+      display: flex; gap: 1rem; list-style: none;
+    }
+    .footer-links a { font-size: 13px; color: var(--text-muted); }
+    .footer-links a:hover { color: var(--text-secondary); }
+
+    /* ── Responsive nav ───────────────────────────────────────── */
+    .nav-menu-toggle { display: none; }
+    @media (max-width: 720px) {
+      .nav-links { display: none; }
+      .nav-menu-toggle { display: block; }
+      .stat { padding: 1rem .75rem; }
+      .stat-value { font-size: 1.25rem; }
+      section { padding: 2.5rem 1rem; }
+      .hero { padding: 3rem 1rem 2.5rem; }
+      nav { padding: 0 1rem; }
+      footer { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Nav ───────────────────────────────────────────────────── -->
+<nav>
+  <a class="nav-logo" href="#">
+    <span class="dot">
+      <svg viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="7" width="3" height="6" rx="1"/>
+        <rect x="5.5" y="4" width="3" height="9" rx="1"/>
+        <rect x="10" y="1" width="3" height="12" rx="1"/>
+      </svg>
+    </span>
+    PulseIFData
+  </a>
+
+  <ul class="nav-links">
+    <li><a href="#sobre">Sobre</a></li>
+    <li><a href="#como-funciona">Pipeline</a></li>
+    <li><a href="#datasets">Datasets</a></li>
+    <li><a href="#schema">Schema</a></li>
+    <li><a href="#setup">Instalação</a></li>
+  </ul>
+
+  <div class="nav-right">
+    <span class="status-pill">
+      <span class="status-dot"></span>
+      Pipeline ativo
+    </span>
+    <a class="btn-github" href="https://github.com/PulseDataLabs/PulseIFData" target="_blank" rel="noopener">
+      <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38
+        0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13
+        -.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87
+        2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95
+        0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21
+        2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04
+        2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82
+        2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48
+        0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013
+        8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+      </svg>
+      GitHub ↗
+    </a>
+  </div>
+</nav>
+
+<!-- ── Hero ──────────────────────────────────────────────────── -->
+<header>
+  <div class="hero">
+    <div class="hero-eyebrow">
+      BCB · IFData · SCR · Cosif
+    </div>
+    <h1>
+      Pulse<em>IFData</em>
+    </h1>
+    <p class="hero-sub" style="font-size:1.1rem;font-weight:600;color:var(--text-primary);margin-bottom:.5rem;">
+      Inteligência do Sistema Financeiro Nacional
+    </p>
+    <p class="hero-sub">
+      Dados do IFData/BACEN estruturados, normalizados e enriquecidos —
+      histórico trimestral desde 2014, métricas derivadas e schema consistente,
+      prontos para consumo em CSV, API ou dashboard.
+    </p>
+    <div class="hero-actions">
+      <a href="#datasets" class="btn-primary">Explorar datasets</a>
+      <a href="https://github.com/PulseDataLabs/PulseIFData" class="btn-secondary" target="_blank" rel="noopener">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+        Ver no GitHub
+      </a>
+      <a href="https://github.com/PulseDataLabs/PulseIFData/issues" class="btn-secondary" target="_blank" rel="noopener">Sugerir dataset</a>
+    </div>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div class="stats-inner">
+      <div class="stat">
+        <span class="stat-value">—</span>
+        <span class="stat-label">Datasets disponíveis</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">2014</span>
+        <span class="stat-label">Início da série histórica</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">Trimestral</span>
+        <span class="stat-label">Frequência de atualização</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">BACEN</span>
+        <span class="stat-label">Fonte (IFData · Olinda)</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ── Sobre ──────────────────────────────────────────────────── -->
+<section id="sobre">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-eyebrow">Sobre</div>
+      <h2>Por que PulseIFData?</h2>
+      <p>
+        O IFData do BACEN é público, mas difícil de consumir: a API exige queries manuais por relatório e por trimestre, sem série histórica consolidada. O PulseIFData resolve isso — coleta, normaliza e entrega tudo em schema fixo, pronto para integração.
+      </p>
+    </div>
+
+    <div class="sobre-grid">
+      <div class="sobre-card">
+        <div class="sc-icon">📦</div>
+        <h3>Histórico consolidado desde 2000</h3>
+        <p>Série completa de 25 anos em um único dataset. Sem iterar trimestre a trimestre na API do BACEN.</p>
+      </div>
+      <div class="sobre-card">
+        <div class="sc-icon">🔄</div>
+        <h3>Schema normalizado e consistente</h3>
+        <p>UTF-8, separador vírgula, decimal ponto, datas YYYY-MM-DD. O mesmo padrão dos outros produtos PulseDataLabs.</p>
+      </div>
+      <div class="sobre-card">
+        <div class="sc-icon">📊</div>
+        <h3>Métricas derivadas inclusas</h3>
+        <p>HHI de concentração, participação de mercado por IF, variação trimestral — o que o IFData bruto não entrega diretamente.</p>
+      </div>
+      <div class="sobre-card">
+        <div class="sc-icon">🔗</div>
+        <h3>Integrável com o portfólio Pulse</h3>
+        <p>Cruzamento nativo com PulseFlat (SELIC, CDI) para análises como NIM ajustado ao ciclo de juros.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Pipeline ───────────────────────────────────────────────── -->
+<section id="como-funciona">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-eyebrow">Pipeline</div>
+      <h2>Como funciona</h2>
+      <p>
+        Pipeline serverless que roda automaticamente após cada divulgação trimestral do BACEN — coleta, normaliza, enriquece e versiona os dados no repositório.
+      </p>
+    </div>
+
+    <div class="pipeline-steps">
+      <div class="pipeline-step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Detecção de nova divulgação</h3>
+          <p>Monitor automático verifica a disponibilidade de novo trimestre no endpoint OData do IFData. Divulgações ocorrem ~60 dias após o fechamento do trimestre (março, junho, setembro) e ~90 dias para dezembro.</p>
+          <span class="step-tag">GitHub Actions · cron</span>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Coleta via API OData do BACEN</h3>
+          <p>Scrapers dedicados acessam o serviço IFDATA v1 do BACEN (Olinda), iterando sobre todos os relatórios disponíveis — cadastro de IFs, relatórios SCR (crédito) e Cosif (balanço/resultado).</p>
+          <span class="step-tag">olinda.bcb.gov.br · OData v4</span>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Normalização e enriquecimento</h3>
+          <p>Padronização de encoding, separadores e datas. Cálculo de métricas derivadas: participação de mercado por IF, HHI por segmento, variação QoQ e YoY, e mapeamento de segmento prudencial (S1–S5).</p>
+          <span class="step-tag">pandas · Python</span>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>Geração dos CSVs</h3>
+          <p>Cada dataset é salvo em CSV plano (UTF-8, vírgula, ponto decimal). Séries históricas acumuladas — cada execução acrescenta o trimestre novo sem reescrever dados anteriores.</p>
+          <span class="step-tag">CSV · UTF-8 · imutável</span>
+        </div>
+      </div>
+      <div class="pipeline-step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h3>Commit versionado no repositório</h3>
+          <p><code>git add → git commit → git push</code>. O CSV atualizado fica disponível imediatamente via URL raw do GitHub para consumo direto em Python, Excel, Power BI ou qualquer ETL.</p>
+          <span class="step-tag">git · GitHub Pages</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Agenda -->
+    <div class="agenda-box">
+      <div class="agenda-header">🕐 Janelas de atualização (após divulgação BACEN)</div>
+      <div class="agenda-row">
+        <span class="agenda-time">T+1 dia</span>
+        <span class="agenda-label">Detecção e coleta automática de novo trimestre</span>
+        <div class="agenda-tags">
+          <span class="agenda-tag">SCR</span>
+          <span class="agenda-tag">Cosif</span>
+          <span class="agenda-tag">Cadastro</span>
+        </div>
+      </div>
+      <div class="agenda-row">
+        <span class="agenda-time">T+1 dia</span>
+        <span class="agenda-label">Normalização, enriquecimento e geração dos CSVs</span>
+        <div class="agenda-tags">
+          <span class="agenda-tag">Derivadas</span>
+          <span class="agenda-tag">HHI</span>
+          <span class="agenda-tag">Share</span>
+        </div>
+      </div>
+      <div class="agenda-row">
+        <span class="agenda-time">T+1 dia</span>
+        <span class="agenda-label">Commit no repositório e disponibilização pública</span>
+        <div class="agenda-tags">
+          <span class="agenda-tag">GitHub</span>
+          <span class="agenda-tag">Raw URL</span>
+        </div>
+      </div>
+      <div class="agenda-row">
+        <span class="agenda-time">Trimestral</span>
+        <span class="agenda-label">Divulgação BACEN: ~60 dias após mar/jun/set, ~90 dias após dez</span>
+        <div class="agenda-tags">
+          <span class="agenda-tag">BACEN · IFData</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Datasets ───────────────────────────────────────────────── -->
+<section id="datasets">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-eyebrow">Datasets</div>
+      <h2>Datasets disponíveis</h2>
+      <p>CSVs atualizados trimestralmente. Clique em Download para baixar o arquivo mais recente.</p>
+    </div>
+
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterDatasets('todos', this)">🌐 Todos</button>
+      <button class="filter-btn" onclick="filterDatasets('credito', this)">◈ Crédito (SCR)</button>
+      <button class="filter-btn" onclick="filterDatasets('balanco', this)">◉ Balanço (Cosif)</button>
+      <button class="filter-btn" onclick="filterDatasets('cadastro', this)">⬢ Cadastro</button>
+      <button class="filter-btn" onclick="filterDatasets('derivadas', this)">◆ Métricas derivadas</button>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="datasets-table">
+        <thead>
+          <tr>
+            <th>Dataset</th>
+            <th>Descrição</th>
+            <th>Frequência</th>
+            <th>Fonte</th>
+            <th>Download</th>
+          </tr>
+        </thead>
+        <tbody id="datasets-body">
+          <!-- preenchido via JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ── Schema ─────────────────────────────────────────────────── -->
+<section id="schema">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-eyebrow">Schema</div>
+      <h2>Estrutura dos dados</h2>
+      <p>Todos os CSVs seguem o padrão: UTF-8, separador vírgula, decimal ponto, datas YYYY-MM-DD.</p>
+    </div>
+
+    <div class="schema-tabs">
+      <div class="schema-tab active" onclick="switchSchema('credito', this)">Crédito (SCR)</div>
+      <div class="schema-tab" onclick="switchSchema('balanco', this)">Balanço (Cosif)</div>
+      <div class="schema-tab" onclick="switchSchema('cadastro', this)">Cadastro IFs</div>
+      <div class="schema-tab" onclick="switchSchema('derivadas', this)">Métricas derivadas</div>
+    </div>
+
+    <div class="table-wrapper">
+      <!-- Crédito -->
+      <div id="schema-credito" class="schema-panel active">
+        <table class="schema-table">
+          <thead>
+            <tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="col-field">data_base</td><td class="col-type">date</td><td class="col-desc">Data de referência do trimestre (YYYY-MM-DD)</td></tr>
+            <tr><td class="col-field">cnpj_if</td><td class="col-type">string(14)</td><td class="col-desc">CNPJ da instituição financeira (sem formatação)</td></tr>
+            <tr><td class="col-field">nome_if</td><td class="col-type">string</td><td class="col-desc">Nome da instituição financeira</td></tr>
+            <tr><td class="col-field">segmento</td><td class="col-type">string</td><td class="col-desc">Segmento prudencial: S1, S2, S3, S4 ou S5</td></tr>
+            <tr><td class="col-field">modalidade</td><td class="col-type">string</td><td class="col-desc">Modalidade de crédito (ex: "Crédito Pessoal", "Imobiliário")</td></tr>
+            <tr><td class="col-field">carteira_total</td><td class="col-type">float</td><td class="col-desc">Saldo total da carteira de crédito (R$ milhões)</td></tr>
+            <tr><td class="col-field">carteira_pf</td><td class="col-type">float</td><td class="col-desc">Carteira de pessoa física (R$ milhões)</td></tr>
+            <tr><td class="col-field">carteira_pj</td><td class="col-type">float</td><td class="col-desc">Carteira de pessoa jurídica (R$ milhões)</td></tr>
+            <tr><td class="col-field">inadimplencia_pct</td><td class="col-type">float</td><td class="col-desc">Taxa de inadimplência (% sobre carteira total)</td></tr>
+            <tr><td class="col-field">pdd</td><td class="col-type">float</td><td class="col-desc">Provisão para devedores duvidosos (R$ milhões)</td></tr>
+            <tr><td class="col-field">write_off</td><td class="col-type">float</td><td class="col-desc">Write-off do trimestre (R$ milhões)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Balanço -->
+      <div id="schema-balanco" class="schema-panel">
+        <table class="schema-table">
+          <thead>
+            <tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="col-field">data_base</td><td class="col-type">date</td><td class="col-desc">Data de referência do trimestre (YYYY-MM-DD)</td></tr>
+            <tr><td class="col-field">cnpj_if</td><td class="col-type">string(14)</td><td class="col-desc">CNPJ da instituição financeira</td></tr>
+            <tr><td class="col-field">nome_if</td><td class="col-type">string</td><td class="col-desc">Nome da instituição financeira</td></tr>
+            <tr><td class="col-field">ativo_total</td><td class="col-type">float</td><td class="col-desc">Ativo total (R$ milhões)</td></tr>
+            <tr><td class="col-field">patrimonio_liquido</td><td class="col-type">float</td><td class="col-desc">Patrimônio líquido (R$ milhões)</td></tr>
+            <tr><td class="col-field">resultado_periodo</td><td class="col-type">float</td><td class="col-desc">Resultado do período (R$ milhões)</td></tr>
+            <tr><td class="col-field">roe_anualizado</td><td class="col-type">float</td><td class="col-desc">Return on equity anualizado (%)</td></tr>
+            <tr><td class="col-field">roa_anualizado</td><td class="col-type">float</td><td class="col-desc">Return on assets anualizado (%)</td></tr>
+            <tr><td class="col-field">indice_basileia</td><td class="col-type">float</td><td class="col-desc">Índice de Basileia (%)</td></tr>
+            <tr><td class="col-field">lcr</td><td class="col-type">float</td><td class="col-desc">Liquidity Coverage Ratio (%)</td></tr>
+            <tr><td class="col-field">nim</td><td class="col-type">float</td><td class="col-desc">Net Interest Margin — margem líquida de juros (%)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Cadastro -->
+      <div id="schema-cadastro" class="schema-panel">
+        <table class="schema-table">
+          <thead>
+            <tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="col-field">cnpj_if</td><td class="col-type">string(14)</td><td class="col-desc">CNPJ da instituição financeira</td></tr>
+            <tr><td class="col-field">nome_if</td><td class="col-type">string</td><td class="col-desc">Nome da instituição financeira</td></tr>
+            <tr><td class="col-field">tipo</td><td class="col-type">string</td><td class="col-desc">Tipo de IF (banco múltiplo, cooperativa, financeira…)</td></tr>
+            <tr><td class="col-field">segmento</td><td class="col-type">string</td><td class="col-desc">Segmento prudencial BACEN: S1, S2, S3, S4, S5</td></tr>
+            <tr><td class="col-field">conglomerado</td><td class="col-type">string</td><td class="col-desc">Nome do conglomerado financeiro, se aplicável</td></tr>
+            <tr><td class="col-field">cnpj_conglomerado</td><td class="col-type">string(14)</td><td class="col-desc">CNPJ do conglomerado, se aplicável</td></tr>
+            <tr><td class="col-field">data_inicio</td><td class="col-type">date</td><td class="col-desc">Data de início de operação no IFData</td></tr>
+            <tr><td class="col-field">ativo</td><td class="col-type">bool</td><td class="col-desc">true se a IF está em operação normal no trimestre</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Derivadas -->
+      <div id="schema-derivadas" class="schema-panel">
+        <table class="schema-table">
+          <thead>
+            <tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="col-field">data_base</td><td class="col-type">date</td><td class="col-desc">Data de referência do trimestre</td></tr>
+            <tr><td class="col-field">cnpj_if</td><td class="col-type">string(14)</td><td class="col-desc">CNPJ da instituição financeira</td></tr>
+            <tr><td class="col-field">segmento_mercado</td><td class="col-type">string</td><td class="col-desc">Segmento de análise (crédito PF, crédito PJ, total…)</td></tr>
+            <tr><td class="col-field">market_share_pct</td><td class="col-type">float</td><td class="col-desc">Participação de mercado da IF no segmento (%)</td></tr>
+            <tr><td class="col-field">hhi_segmento</td><td class="col-type">float</td><td class="col-desc">Índice Herfindahl-Hirschman de concentração do segmento (0–10000)</td></tr>
+            <tr><td class="col-field">var_qoq_carteira</td><td class="col-type">float</td><td class="col-desc">Variação da carteira vs. trimestre anterior (%)</td></tr>
+            <tr><td class="col-field">var_yoy_carteira</td><td class="col-type">float</td><td class="col-desc">Variação da carteira vs. mesmo trimestre do ano anterior (%)</td></tr>
+            <tr><td class="col-field">ranking_ativo_total</td><td class="col-type">int</td><td class="col-desc">Posição da IF no ranking por ativo total no trimestre</td></tr>
+            <tr><td class="col-field">ranking_carteira</td><td class="col-type">int</td><td class="col-desc">Posição da IF no ranking por carteira de crédito total</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Setup ──────────────────────────────────────────────────── -->
+<section id="setup">
+  <div class="section-inner">
+    <div class="section-header">
+      <div class="section-eyebrow">Instalação</div>
+      <h2>Comece em minutos</h2>
+      <p>Clone, habilite o Actions e os dados chegam automaticamente a cada nova divulgação do BACEN.</p>
+    </div>
+
+    <div class="setup-steps">
+      <div class="setup-step">
+        <div class="ss-num">1</div>
+        <div class="ss-body">
+          <h4>Clone o repositório</h4>
+          <p>Faça o fork ou clone direto do <code>PulseIFData</code> para sua conta GitHub.</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <div class="ss-num">2</div>
+        <div class="ss-body">
+          <h4>Habilite o GitHub Actions</h4>
+          <p>Na aba <code>Actions</code> do repositório, clique em <em>Enable Actions</em>. O pipeline já está configurado para monitorar novas divulgações do BACEN.</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <div class="ss-num">3</div>
+        <div class="ss-body">
+          <h4>Rode manualmente para testar</h4>
+          <p><code>Actions → Coleta IFData → Run workflow</code> para verificar se a coleta e normalização funcionam antes da próxima divulgação trimestral.</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <div class="ss-num">4</div>
+        <div class="ss-body">
+          <h4>Consuma os CSVs</h4>
+          <p>Aponte seu Python, Excel ou ferramenta de BI para as URLs raw do GitHub. Os dados são versionados e imutáveis — cada trimestre fica registrado permanentemente.</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <div class="ss-num">5</div>
+        <div class="ss-body">
+          <h4>Instale dependências Python (opcional)</h4>
+          <p>Para rodar os scrapers localmente: <code>pip install -r requirements.txt</code>. Sem dependências proprietárias — apenas pandas, requests e aiohttp.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">terminal</span>
+        <button class="code-copy" onclick="copyCode(this)">copiar</button>
+      </div>
+      <pre id="setup-code"><span class="comment"># 1. Clone o repositório</span>
+<span class="cmd">git clone</span> https://github.com/PulseDataLabs/PulseIFData.git
+<span class="cmd">cd</span> PulseIFData
+
+<span class="comment"># 2. Instale as dependências</span>
+<span class="cmd">pip install</span> -r requirements.txt
+
+<span class="comment"># 3. Teste localmente — coleta todos os relatórios do trimestre mais recente</span>
+<span class="cmd">python</span> run_all.py
+
+<span class="comment"># Ou um relatório específico</span>
+<span class="cmd">python</span> run_all.py --relatorio credito_modalidade
+<span class="cmd">python</span> run_all.py --relatorio balanco_cosif
+
+<span class="comment"># 4. URL raw para importar direto no Python ou BI:</span>
+<span class="kw">url</span> = <span class="comment">"https://raw.githubusercontent.com/PulseDataLabs/"</span>
+      <span class="comment">"PulseIFData/main/data/credito_modalidade.csv"</span></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ─────────────────────────────────────────────────── -->
+<footer>
+  <div class="footer-left">
+    <span>© 2026 <a href="https://pulsedatalabs.github.io">PulseDataLabs</a></span>
+    <span style="color:var(--border)">·</span>
+    <span>Dados públicos do <a href="https://www3.bcb.gov.br/ifdata/" target="_blank" rel="noopener">IFData/BACEN</a> — ODbL</span>
+  </div>
+  <ul class="footer-links">
+    <li><a href="https://pulsedatalabs.github.io/PulseFlat/">PulseFlat</a></li>
+    <li><a href="https://pulsedatalabs.github.io/PulseRatingsBrasil/">PulseRatings</a></li>
+    <li><a href="https://github.com/PulseDataLabs/PulseIFData" target="_blank" rel="noopener">GitHub</a></li>
+    <li><a href="mailto:pulsedatalabs@gmail.com">Contato</a></li>
+  </ul>
+</footer>
+
+<script src="data/datasets.js"></script>
+<script src="data/pipeline_status.js"></script>
+
+<script>
+  const DATASETS = window.PULSEIFDATA_DATASETS || [];
+  const STATUS = window.PULSEIFDATA_PIPELINE_STATUS || null;
+
+  let currentFilter = "todos";
+
+  function renderDatasets(filter) {
+    const tbody = document.getElementById("datasets-body");
+    const list = filter === "todos" ? DATASETS : DATASETS.filter(d => d.cat === filter);
+    tbody.innerHTML = list.map(d => {
+      const path = d.id === "ifdata_historical_10y" ? "processed/" : "";
+      return `
+        <tr data-cat="${d.cat || ''}">
+          <td><span class="ds-name">${d.name}</span></td>
+          <td><span class="ds-desc">${d.desc}</span></td>
+          <td><span class="ds-freq">${d.freq || 'Trimestral'}</span></td>
+          <td><span class="ds-source">${d.fonte || d.source || 'BACEN'}</span></td>
+          <td>
+            <button class="dl-btn" onclick="fakeDownload('${path}${d.name}')">
+              ↓ Download
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  function filterDatasets(cat, btn) {
+    currentFilter = cat;
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    renderDatasets(cat);
+  }
+
+  function fakeDownload(path) {
+    const url = `https://raw.githubusercontent.com/PulseDataLabs/PulseIFData/main/data/${path}`;
+    window.open(url, "_blank");
+  }
+
+  /* ── Live stats from pipeline_status ── */
+  function updateStats() {
+    if (!STATUS || !STATUS.summary) return;
+    const s = STATUS.summary;
+    const elapsed = STATUS.elapsed_seconds || 0;
+
+    const statEls = document.querySelectorAll(".stat-value");
+    if (statEls[0]) statEls[0].textContent = (s.total || 0) + "";
+    if (statEls[1]) statEls[1].textContent = "2014";
+    if (statEls[2]) statEls[2].textContent = "Trimestral";
+
+    const statusPill = document.querySelector(".status-pill");
+    if (statusPill) {
+      const dot = statusPill.querySelector(".status-dot");
+      if (dot) {
+        dot.style.background = s.failed > 0 ? "#e53e3e" :
+          s.drifts > 0 ? "#d69e2e" : "#38a169";
+      }
+      const label = statusPill.childNodes[2] || statusPill.lastChild;
+      if (label) label.textContent = s.failed > 0 ? "Com erros" :
+        s.drifts > 0 ? "Drifts detectados" : "Pipeline ativo";
+    }
+  }
+
+  /* ── Schema tabs ── */
+  function switchSchema(id, el) {
+    document.querySelectorAll(".schema-tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".schema-panel").forEach(p => p.classList.remove("active"));
+    el.classList.add("active");
+    document.getElementById("schema-" + id).classList.add("active");
+  }
+
+  /* ── Copy code ── */
+  function copyCode(btn) {
+    const code = document.getElementById("setup-code").innerText;
+    navigator.clipboard.writeText(code).then(() => {
+      btn.textContent = "copiado ✓";
+      setTimeout(() => btn.textContent = "copiar", 2000);
+    });
+  }
+
+  /* init */
+  renderDatasets("todos");
+  updateStats();
+</script>
+</body>
+</html>

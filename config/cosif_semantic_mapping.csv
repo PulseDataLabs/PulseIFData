@@ -1,0 +1,36 @@
+conta_cosif,campo_semantico,relatorio,nome_coluna
+78182,ativo_total,1|2,Ativo Total
+78183,carteira_credito,1,Carteira de Crédito Classificada
+78184,passivo_exigivel,1,Passivo Circulante e Exigível a Longo Prazo e Resultados de Exercícios Futuros
+78185,captacoes,1|3,Captações
+78186,patrimonio_liquido,1|3,Patrimônio Líquido
+78187,lucro_liquido,1|4,Lucro Líquido
+79649,patrimonio_referencia_rwa,1|5,Patrimônio de Referência para Comparação com o RWA
+79662,indice_imobilizacao,1,Índice de Imobilização
+79664,indice_basileia,1|5,Índice de Basileia
+78188,disponibilidades,2,Disponibilidades
+78189,aplicacoes_interfinanceiras,2,Aplicações Interfinanceiras de Liquidez
+78190,tvm_derivativos,2,TVM e Instrumentos Financeiros Derivativos
+78199,outros_creditos_liquido,2,Outros Créditos - Líquido de Provisão
+78200,outros_ativos_realizaveis,2,Outros Ativos Realizáveis
+78201,permanente_ajustado,2,Permanente Ajustado
+78288,obrigacoes_compromissadas,3,Obrigações por Operações Compromissadas
+78295,obrigacoes_emprestimos_repasses,3,Obrigações por Empréstimos e Repasses
+78296,instrumentos_derivativos_passivo,3,Instrumentos Derivativos
+78297,outras_obrigacoes,3,Outras Obrigações
+78298,passivo_circulante_exigivel,3,Passivo Circulante e Exigível a Longo Prazo
+78300,passivo_total,3,Passivo Total
+78216,receita_servicos,4,Rendas de Prestação de Serviços
+78225,resultado_operacional,4,Resultado Operacional
+78226,resultado_antes_tributacao,4,Resultado antes da Tributação e Participação
+78227,resultado_nao_operacional,4,Resultado Não Operacional
+78228,ir_cs,4,Imposto de Renda e Contribuição Social
+78229,participacao_lucros,4,Participação nos Lucros
+79658,exposicao_total,5,Exposição Total
+79659,indice_capital_principal,5,Índice de Capital Principal
+79660,indice_capital_nivel1,5,Índice de Capital Nível I
+79661,razao_alavancagem,5,Razão de Alavancagem
+79665,rwa,5,Ativos Ponderados pelo Risco
+138232,rwa_risco_credito,5,RWA para Risco de Crédito
+79656,rwa_risco_operacional,5,RWA para Risco Operacional
+79651,rwa_risco_mercado,5,RWA para Risco de Mercado
