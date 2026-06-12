@@ -271,6 +271,9 @@
       <select id="filtro-dataset">
         <option value="historico">Série Histórica (balanço + indicadores)</option>
         <option value="cadastro">Cadastro de IFs</option>
+        <option value="conglomerados">Conglomerados Financeiros (Mensal)</option>
+        <option value="balancetes">Balancetes de Bancos COSIF (Mensal)</option>
+        <option value="basileia">Parcelas de Capital Basileia (Trimestral)</option>
         <option value="rankings">Rankings</option>
         <option value="market-share">Market Share</option>
         <option value="hhi">HHI Concentração</option>
@@ -327,17 +330,22 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/2.2.2/js/dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/select/3.1.3/js/dataTables.select.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.6.0/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
 <script>
-const BASE = 'https://raw.githubusercontent.com/PulseDataLabs/PulseIFData/main/';
+const BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+  ? './' 
+  : 'https://raw.githubusercontent.com/PulseDataLabs/PulseIFData/main/';
 const DATASETS = {
-  'historico':   { url: BASE + 'data/processed/ifdata_historical.csv', label: 'Série Histórica' },
-  'cadastro':    { url: BASE + 'data/cadastro_ifs.csv', label: 'Cadastro IFs' },
-  'rankings':    { url: BASE + 'data/derivadas_rankings.csv', label: 'Rankings' },
-  'market-share':{ url: BASE + 'data/derivadas_market_share.csv', label: 'Market Share' },
-  'hhi':         { url: BASE + 'data/derivadas_hhi.csv', label: 'HHI' },
-  'var':         { url: BASE + 'data/derivadas_var.csv', label: 'Variações' },
+  'historico':     { url: BASE + 'data/processed/ifdata_historical.csv', label: 'Série Histórica' },
+  'cadastro':      { url: BASE + 'data/cadastro_ifs.csv', label: 'Cadastro IFs' },
+  'conglomerados': { url: BASE + 'data/bacen_conglomerados.csv', label: 'Conglomerados Financeiros' },
+  'balancetes':    { url: BASE + 'data/bacen_balancetes_bancos.csv', label: 'Balancetes COSIF' },
+  'basileia':      { url: BASE + 'data/bacen_parcelas_capital_basileia.csv', label: 'Parcelas de Capital' },
+  'rankings':      { url: BASE + 'data/derivadas_rankings.csv', label: 'Rankings' },
+  'market-share':  { url: BASE + 'data/derivadas_market_share.csv', label: 'Market Share' },
+  'hhi':           { url: BASE + 'data/derivadas_hhi.csv', label: 'HHI' },
+  'var':           { url: BASE + 'data/derivadas_var.csv', label: 'Variações' },
 };
 
 let dt = null;
@@ -373,13 +381,76 @@ function getColDefs(key) {
       { data: 'UF', title: 'UF' },
       { data: 'AnoMes', title: 'Período' },
     ],
+    'conglomerados': [
+      { data: 'data_referencia', title: 'Ref' },
+      { data: 'NOME DO CONGLOMERADO', title: 'Conglomerado' },
+      { data: 'CLASSE DO CONGLOMERADO', title: 'Classe' },
+      { data: 'CNPJ PARTICIPANTE', title: 'CNPJ' },
+      { data: 'NOME DO PARTICIPANTE', title: 'Participante' },
+      { data: 'TIPO PARTICIPAÇÃO', title: 'Participação' },
+      { data: 'DATA INÍCIO', title: 'Início', render: v => v ? v.split(' ')[0] : '-' },
+      { data: 'UF', title: 'UF' }
+    ],
+    'balancetes': [
+      { data: 'data_base', title: 'Período' },
+      { data: 'cnpj', title: 'CNPJ' },
+      { data: 'nome_instituicao', title: 'Instituição' },
+      { data: 'nome_congl', title: 'Conglomerado' },
+      { data: 'conta', title: 'Conta' },
+      { data: 'nome_conta', title: 'Nome Conta' },
+      { data: 'saldo', title: 'Saldo (R$)', render: v => v ? parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2}) : '-' }
+    ],
+    'basileia': [
+      { data: 'AnoMes', title: 'Período' },
+      { data: 'CodInst', title: 'Código' },
+      { data: 'tipo_instituicao_label', title: 'Tipo Inst.' },
+      { data: 'Grupo', title: 'Grupo' },
+      { data: 'Conta', title: 'Conta' },
+      { data: 'NomeColuna', title: 'Coluna' },
+      { data: 'DescricaoColuna', title: 'Descrição' },
+      { data: 'Saldo', title: 'Valor', render: v => {
+          if (!v) return '-';
+          const n = parseFloat(v);
+          if (isNaN(n)) return v;
+          if (n > 0 && n < 1.5) {
+            return (n * 100).toFixed(2) + '%';
+          }
+          return n.toLocaleString('pt-BR', {maximumFractionDigits: 2});
+        }
+      }
+    ],
     'rankings': [
       { data: 'data_base', title: 'Data Base' },
+      { data: 'AnoMes', title: 'Período' },
       { data: 'CodInst', title: 'Código' },
       { data: 'NomeInstituicao', title: 'Instituição' },
-      { data: 'ranking_ativo', title: 'Rank Ativo' },
-      { data: 'ranking_carteira', title: 'Rank Carteira' },
+      { data: 'ativo_total', title: 'Ativo Total', render: v => v ? parseFloat(v).toLocaleString('pt-BR',{maximumFractionDigits:0}) : '-' },
+      { data: 'ranking', title: 'Ranking' }
+    ],
+    'market-share': [
+      { data: 'data_base', title: 'Data Base' },
+      { data: 'AnoMes', title: 'Período' },
+      { data: 'CodInst', title: 'Código' },
+      { data: 'NomeInstituicao', title: 'Instituição' },
       { data: 'Segmento', title: 'Segmento' },
+      { data: 'carteira_credito', title: 'Carteira Crédito', render: v => v ? parseFloat(v).toLocaleString('pt-BR',{maximumFractionDigits:0}) : '-' },
+      { data: 'market_share_pct', title: 'Market Share', render: v => v ? parseFloat(v).toFixed(2)+'%' : '-' }
+    ],
+    'hhi': [
+      { data: 'AnoMes', title: 'Período' },
+      { data: 'hhi', title: 'HHI', render: v => v ? parseFloat(v).toFixed(2) : '-' },
+      { data: 'total_carteira', title: 'Total Carteira', render: v => v ? parseFloat(v).toLocaleString('pt-BR',{maximumFractionDigits:0}) : '-' },
+      { data: 'numero_ifs', title: 'Nº IFs', render: v => v ? parseInt(v).toLocaleString('pt-BR') : '-' },
+      { data: 'data_base', title: 'Data Base' }
+    ],
+    'var': [
+      { data: 'data_base', title: 'Data Base' },
+      { data: 'AnoMes', title: 'Período' },
+      { data: 'CodInst', title: 'Código' },
+      { data: 'NomeInstituicao', title: 'Instituição' },
+      { data: 'carteira_credito', title: 'Carteira Crédito', render: v => v ? parseFloat(v).toLocaleString('pt-BR',{maximumFractionDigits:0}) : '-' },
+      { data: 'var_qoq_pct', title: 'Var QoQ', render: v => v ? parseFloat(v).toFixed(2)+'%' : '-' },
+      { data: 'var_yoy_pct', title: 'Var YoY', render: v => v ? parseFloat(v).toFixed(2)+'%' : '-' }
     ],
   };
   return defs[key] || [];
@@ -393,6 +464,7 @@ function atualizarStats(data, key) {
     if (r.CodInst) ifs.add(r.CodInst);
     if (r.AnoMes) periodos.add(r.AnoMes);
     if (r.data_base) periodos.add(r.data_base);
+    if (r.data_referencia) periodos.add(r.data_referencia);
     if (r.Segmento) segmentos.add(r.Segmento);
   });
   document.getElementById('st-if').textContent = ifs.size.toLocaleString('pt-BR');
@@ -417,7 +489,9 @@ function carregarDados() {
       dynamicTyping: false,
       skipEmptyLines: true,
       complete: function(results) {
-        dadosBrutos = results.data.filter(r => r.CodInst || r.cod_inst);
+        dadosBrutos = results.data.filter(r => {
+          return Object.values(r).some(v => v !== null && v !== '');
+        });
         if (dadosBrutos.length === 0) {
           container.innerHTML = '<div class="error-box">Nenhum dado encontrado. O dataset pode estar vazio ou indisponível.</div>';
           return;
@@ -425,6 +499,11 @@ function carregarDados() {
         dadosBrutos.forEach(r => {
           if (r.cod_inst && !r.CodInst) r.CodInst = r.cod_inst;
           if (r.nome_if && !r.NomeInstituicao) r.NomeInstituicao = r.nome_if;
+          // Normalização para novos datasets (conglomerados e balancetes)
+          if (r['CNPJ PARTICIPANTE'] && !r.CodInst) r.CodInst = r['CNPJ PARTICIPANTE'];
+          if (r['NOME DO PARTICIPANTE'] && !r.NomeInstituicao) r.NomeInstituicao = r['NOME DO PARTICIPANTE'];
+          if (r.cnpj && !r.CodInst) r.CodInst = r.cnpj;
+          if (r.nome_instituicao && !r.NomeInstituicao) r.NomeInstituicao = r.nome_instituicao;
         });
 
         const instFilter = document.getElementById('filtro-inst').value.trim().toLowerCase();
@@ -444,7 +523,8 @@ function carregarDados() {
         if (perFilter) {
           filtered = filtered.filter(r =>
             (r.AnoMes || '').includes(perFilter) ||
-            (r.data_base || '').includes(perFilter)
+            (r.data_base || '').includes(perFilter) ||
+            (r.data_referencia || '').includes(perFilter)
           );
         }
 

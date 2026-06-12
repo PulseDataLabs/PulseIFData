@@ -77,8 +77,9 @@ class BacenConglomeradosScraper(BaseScraper):
                 raise RuntimeError("Nenhum XLSX encontrado no arquivo ZIP.")
             xlsx_bytes = zf.read(xlsx_names[0])
 
-        df = pd.read_excel(BytesIO(xlsx_bytes), engine="openpyxl")
+        df = pd.read_excel(BytesIO(xlsx_bytes), skiprows=9, engine="openpyxl")
         df.columns = [str(c).strip() for c in df.columns]
+        df = df[df["CNPJ PARTICIPANTE"].notna()]
         
         # Insere data de referência (primeiro dia do mês correspondente)
         df.insert(0, "data_referencia", ref.replace(day=1).strftime("%Y-%m-%d"))
