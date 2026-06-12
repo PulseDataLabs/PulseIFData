@@ -84,6 +84,9 @@
       border-radius: 8px;
     }
     .filter-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px; }
+    .filter-group-wide { flex: 2.5; min-width: 320px; }
+    .filter-group-narrow { flex: 0 0 110px; min-width: 110px; }
+    .filter-group-short { flex: 0 0 130px; min-width: 130px; }
     .filter-group label {
       font-family: var(--mono); font-size: 10px; font-weight: 600;
       color: var(--text-3); text-transform: uppercase; letter-spacing: .08em;
@@ -216,7 +219,7 @@
       .nav-links { display: none; }
       .container { padding: 1rem 12px; }
       .filters { flex-direction: column; }
-      .filter-group { min-width: 100%; }
+      .filter-group, .filter-group-wide, .filter-group-narrow, .filter-group-short { min-width: 100% !important; flex: 1 1 auto !important; }
       .stats-row { grid-template-columns: repeat(2,1fr); }
     }
   </style>
@@ -266,7 +269,7 @@
   </div>
 
   <div class="filters">
-    <div class="filter-group">
+    <div class="filter-group filter-group-wide">
       <label>Dataset</label>
       <select id="filtro-dataset">
         <option value="historico">Série Histórica (balanço + indicadores)</option>
@@ -284,7 +287,7 @@
       <label>Instituição (nome ou código)</label>
       <input type="text" id="filtro-inst" placeholder="Ex: Itaú, 60701190, Bradesco…" />
     </div>
-    <div class="filter-group">
+    <div class="filter-group filter-group-narrow">
       <label>Segmento</label>
       <select id="filtro-segmento">
         <option value="">Todos</option>
@@ -295,9 +298,9 @@
         <option value="S5">S5</option>
       </select>
     </div>
-    <div class="filter-group">
+    <div class="filter-group filter-group-short">
       <label>Período (AnoMes)</label>
-      <input type="text" id="filtro-periodo" placeholder="Ex: 202412" />
+      <input type="text" id="filtro-periodo" placeholder="Ex: 202412" maxlength="6" />
     </div>
     <div class="filter-actions">
       <button class="btn btn-primary" onclick="carregarDados()">Carregar</button>
