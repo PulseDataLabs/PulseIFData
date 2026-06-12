@@ -1,0 +1,114 @@
+#!/usr/bin/env python
+# coding: utf-8
+"""
+Scraper: BACEN – Balancetes de Bancos (COSIF)
+Fonte:   https://www.bcb.gov.br/api/servico/sitebcb/Documentos/byListGuid
+Saída:   data/bacen_balancetes_bancos.csv
+
+Busca o documento de balancetes mais recente do BCB, faz o download do arquivo ZIP,
+extrai o CSV interno, trata os campos (limpeza de cabeçalhos e formatação de saldo)
+e salva o arquivo final tratado.
+"""
+import os
+import sys
+import time
+import zipfile
+import csv
+from io import BytesIO
+
+import pandas as pd
+import requests
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from scrapers.utils.base import BaseScraper
+
+
+DOCS_API_URL = (
+    "https://www.bcb.gov.br/api/servico/sitebcb/Documentos/byListGuid"
+    "?tronco=estabilidadefinanceira"
+    "&guidLista=a11917e4-c729-4259-bd4e-0266827b6acd"
+    "&ordem=DataDocumento%20desc"
+    "&pasta=/Bancos"
+)
+
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept": "application/json",
+}
+
+
+class BacenBalancetesBancosScraper(BaseScraper):
+    name = "bacen_balancetes_bancos"
+    group = "bacen"
+    enabled = True
+    phase = 1
+    accumulate = False  # Sobrescreve para manter apenas o balancete mais recente
+    chaves_dedup = ["data_base", "cnpj", "conta"]
+
+    title = "BACEN — Balancetes de Bancos (COSIF)"
+    description = "Detalhamento contábil mensal (Plano de Contas COSIF) para todos os bancos no Brasil."
+    icon = "📋"
+    icon_class = "icon-bacen"
+    badge = "Mensal"
+    badge_class = "badge-monthly"
+    tags = ["balancete", "COSIF", "contabilidade", "BACEN"]
+    source = "BACEN · Open Data"
+
+    def fetch(self) -> pd.DataFrame:
+        resp = requests.get(DOCS_API_URL, headers=HEADERS, timeout=60)
+        resp.raise_for_status()
+
+        data = resp.json()
+        conteudo = data.get("conteudo", [])
+        if not conteudo:
+            raise RuntimeError("Nenhum documento retornado pela API do BCB.")
+
+        doc = conteudo[0]
+        relative_url = doc.get("Url")
+        if not relative_url:
+            raise RuntimeError("URL do documento não informada na resposta da API.")
+
+        download_url = "https://www.bcb.gov.br" + relative_url
+        resp_file = requests.get(download_url, headers=HEADERS, timeout=120)
+        resp_file.raise_for_status()
+
+        with zipfile.ZipFile(BytesIO(resp_file.content)) as zf:
+            filenames = zf.namelist()
+            if not filenames:
+                raise RuntimeError("Arquivo ZIP baixado está vazio.")
+            with zf.open(filenames[0]) as f:
+                content = f.read().decode("iso-8859-1")
+
+        lines = content.splitlines()
+        if len(lines) < 4:
+            raise RuntimeError("O arquivo CSV extraído está vazio ou corrompido.")
+
+        header_line = lines[3].strip()
+        if header_line.startswith("#"):
+            header_line = header_line[1:]
+        headers = [h.lower().strip() for h in header_line.split(";")]
+
+        reader = csv.reader(lines[4:], delimiter=";")
+        rows = []
+        for r in reader:
+            if not r or not any(cell.strip() for cell in r):
+                continue
+            row_dict = {}
+            for idx, val in enumerate(r):
+                if idx < len(headers):
+                    col_name = headers[idx]
+                    val_clean = val.strip()
+                    if col_name == "saldo":
+                        val_clean = val_clean.replace(".", "").replace(",", ".")
+                    row_dict[col_name] = val_clean
+            rows.append(row_dict)
+
+        return pd.DataFrame(rows)
+
+
+if __name__ == "__main__":
+    BacenBalancetesBancosScraper().run()
