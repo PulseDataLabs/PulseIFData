@@ -29,12 +29,13 @@ def gerar_market_share(
         log.warning(f"coluna '{col_valor}' não encontrada — pulando market share")
         return pd.DataFrame()
 
-    # Market share por IF dentro de cada AnoMes
+    # Market share por IF dentro de cada AnoMes (Vetorizado!)
+    import numpy as np
     df["total_segmento"] = df.groupby("AnoMes")[col_valor].transform("sum")
-    df["market_share_pct"] = df.apply(
-        lambda r: (r[col_valor] / r["total_segmento"] * 100)
-        if r["total_segmento"] != 0 else 0.0,
-        axis=1,
+    df["market_share_pct"] = np.where(
+        df["total_segmento"] != 0,
+        (df[col_valor] / df["total_segmento"]) * 100,
+        0.0
     )
 
     cols = ["data_base", "AnoMes", "CodInst"]
@@ -65,11 +66,13 @@ def gerar_hhi(
         log.warning(f"coluna '{col_valor}' não encontrada — pulando HHI")
         return pd.DataFrame()
 
-    # Market share por IF dentro de cada AnoMes
+    # Market share por IF dentro de cada AnoMes (Vetorizado!)
+    import numpy as np
     df["total_segmento"] = df.groupby("AnoMes")[col_valor].transform("sum")
-    df["share"] = df.apply(
-        lambda r: (r[col_valor] / r["total_segmento"]) if r["total_segmento"] != 0 else 0.0,
-        axis=1,
+    df["share"] = np.where(
+        df["total_segmento"] != 0,
+        df[col_valor] / df["total_segmento"],
+        0.0
     )
 
     # HHI = sum(share²) * 10000 (escala 0–10000)

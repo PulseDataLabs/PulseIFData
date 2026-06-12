@@ -107,14 +107,17 @@ def baixar_com_checkpoint(
     max_retries: int = 3,
     retry_delay: int = 5,
 ) -> pd.DataFrame | None:
+    if raw_path.suffix == ".csv":
+        raw_path = raw_path.with_suffix(".parquet")
+
     if raw_path.exists() and raw_path.stat().st_size > 0:
         try:
-            df = pd.read_csv(raw_path)
+            df = pd.read_parquet(raw_path)
             if not df.empty:
                 log.info(f"Checkpoint carregado: {raw_path.name} ({len(df)} linhas)")
                 return df
-        except Exception:
-            log.warning(f"Checkpoint corrompido, refazendo: {raw_path.name}")
+        except Exception as e:
+            log.warning(f"Checkpoint corrompido, refazendo {raw_path.name}: {e}")
 
     df = paginar_odata(
         session, url, params,
@@ -125,6 +128,8 @@ def baixar_com_checkpoint(
         return None
 
     raw_path.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(raw_path, index=False, encoding="utf-8")
+    # Converte para string para manter compatibilidade com o formato de texto original
+    df = df.astype(str)
+    df.to_parquet(raw_path, index=False)
     log.info(f"Checkpoint salvo: {raw_path.name} ({len(df)} linhas)")
     return df

@@ -28,9 +28,9 @@ def _carregar_settings() -> dict:
 def _extrair_instituicoes_de_valores(raw_dir: Path) -> pd.DataFrame:
     log.info("Fallback: extraindo CodInst de dados financeiros existentes")
     codinsts: set[str] = set()
-    for fpath in sorted(raw_dir.glob("ifdata_rel*.csv")):
+    for fpath in sorted(raw_dir.glob("ifdata_rel*.parquet")):
         try:
-            df = pd.read_csv(fpath, usecols=["CodInst"], dtype=str)
+            df = pd.read_parquet(fpath, columns=["CodInst"])
             codinsts.update(df["CodInst"].dropna().unique())
         except Exception:
             continue

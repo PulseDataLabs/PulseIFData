@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import polars as pl
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from scrapers.utils.rest_cadastro import (
@@ -18,17 +19,18 @@ COLUNAS_SAIDA = ["CodInst", "NomeInstituicao", "Segmento", "UF", "AnoMes"]
 
 
 def extrair_codinst_de_valores(raw_dir: Path) -> pd.DataFrame:
-    log.info("Extraindo CodInst de dados financeiros existentes")
-    codinsts: set[str] = set()
-    for fpath in sorted(raw_dir.glob("ifdata_rel*.csv")):
-        try:
-            df = pd.read_csv(fpath, usecols=["CodInst"], dtype=str)
-            codinsts.update(df["CodInst"].dropna().unique())
-        except Exception:
-            continue
-    if not codinsts:
+    log.info("Extraindo CodInst de dados financeiros existentes (Polars)")
+    parquet_files = sorted(raw_dir.glob("ifdata_rel*.parquet"))
+    if not parquet_files:
+        log.warning("Nenhum arquivo Parquet encontrado em data/raw")
         return pd.DataFrame()
-    return pd.DataFrame(sorted(codinsts), columns=["CodInst"])
+    try:
+        df = pl.read_parquet(parquet_files, columns=["CodInst"])
+        unique_cods = df["CodInst"].drop_nulls().unique().sort()
+        return unique_cods.to_frame().to_pandas()
+    except Exception as e:
+        log.warning(f"Erro ao extrair CodInst via Polars: {e}")
+        return pd.DataFrame()
 
 
 def aplicar_cadastro_rest(df: pd.DataFrame, df_cad: pd.DataFrame) -> pd.DataFrame:

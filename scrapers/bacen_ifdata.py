@@ -95,13 +95,13 @@ class BacenIfdataScraper(BaseScraper):
                         f"Período {periodo}"
                     )
 
-                    raw_filename = f"ifdata_rel{rel_id}_{periodo}_tipo{tipo_codigo}.csv"
+                    raw_filename = f"ifdata_rel{rel_id}_{periodo}_tipo{tipo_codigo}.parquet"
                     raw_path = self.raw_dir / raw_filename
 
                     if raw_path.exists() and raw_path.stat().st_size > 0:
                         print_skip(f"Checkpoint: {raw_filename}")
                         try:
-                            df_existing = pd.read_csv(raw_path)
+                            df_existing = pd.read_parquet(raw_path)
                             if not df_existing.empty:
                                 frames_totais.append(df_existing)
                                 continue

@@ -6,6 +6,7 @@ import time
 from base64 import b64encode
 from datetime import datetime
 from pathlib import Path
+from typing import Union
 from zoneinfo import ZoneInfo
 
 import requests
@@ -128,18 +129,22 @@ def _salvar_csv_logger():
 
 def salvar_csv(
     arquivo: Path,
-    registros: list[dict],
+    registros: Union[list, "pd.DataFrame"],
     cabecalho: list[str],
     chaves_dedup: list[str] | None = None,
     acumular: bool = True,
 ) -> None:
+    import pandas as pd
     log = _salvar_csv_logger()
-    if not registros:
+    
+    is_empty = registros.empty if isinstance(registros, pd.DataFrame) else not registros
+    if is_empty:
         log.warning("Nenhum registro para salvar — abortando.")
         sys.exit(1)
+        
     try:
         schemas_path = arquivo.parent / "schemas.json"
-        if schemas_path.exists() and registros:
+        if schemas_path.exists():
             with schemas_path.open("r", encoding="utf-8") as sf:
                 schemas = json.load(sf)
             filtered_cols = [c for c in cabecalho if c not in ("conjunto", "arquivo_origem", "registro_hash", "dt_captura")]
@@ -167,6 +172,13 @@ def salvar_csv(
 
     arquivo.parent.mkdir(parents=True, exist_ok=True)
 
+    if isinstance(registros, pd.DataFrame):
+        df_novos = registros.copy()
+    else:
+        df_novos = pd.DataFrame(registros, columns=cabecalho)
+
+    substituidas = 0
+
     if acumular and arquivo.exists():
         header_existente = read_existing_header(arquivo)
         merged = []
@@ -175,38 +187,35 @@ def salvar_csv(
                 merged.append(col)
         cabecalho = merged
 
-    datas_novas = {r.get("data_captura") for r in registros}
-    chaves_novas: set[tuple] | None = None
-    if chaves_dedup:
-        chaves_novas = {
-            tuple(r.get(c, "") for c in chaves_dedup)
-            for r in registros
-        }
+        try:
+            df_antigo = pd.read_csv(arquivo, dtype=str, keep_default_na=False)
+            
+            for c in cabecalho:
+                if c not in df_novos.columns:
+                    df_novos[c] = ""
+                if c not in df_antigo.columns:
+                    df_antigo[c] = ""
 
-    linhas_anteriores: list[dict] = []
-    substituidas = 0
+            if chaves_dedup:
+                keys_new = df_novos[chaves_dedup].astype(str).agg('-'.join, axis=1)
+                keys_old = df_antigo[chaves_dedup].astype(str).agg('-'.join, axis=1)
+                mask_keep = ~keys_old.isin(keys_new)
+                substituidas = len(df_antigo) - mask_keep.sum()
+                df_antigo_filtrado = df_antigo[mask_keep]
+            else:
+                datas_novas = df_novos["data_captura"].unique()
+                mask_keep = ~df_antigo["data_captura"].isin(datas_novas)
+                substituidas = len(df_antigo) - mask_keep.sum()
+                df_antigo_filtrado = df_antigo[mask_keep]
 
-    if acumular and arquivo.exists():
-        with arquivo.open(newline="", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            for linha in reader:
-                if chaves_novas is not None:
-                    chave = tuple(linha.get(c, "") for c in chaves_dedup)
-                    if chave in chaves_novas:
-                        substituidas += 1
-                        continue
-                else:
-                    if linha.get("data_captura") in datas_novas:
-                        substituidas += 1
-                        continue
-                linhas_anteriores.append(linha)
+            df_final = pd.concat([df_antigo_filtrado, df_novos[cabecalho]], ignore_index=True)
+        except Exception as e:
+            log.warning(f"Erro ao ler arquivo existente para acumular, reescrevendo: {e}")
+            df_final = df_novos[cabecalho]
+    else:
+        df_final = df_novos[cabecalho]
 
-    todas = linhas_anteriores + registros
-
-    with arquivo.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=cabecalho, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(todas)
+    df_final.to_csv(arquivo, index=False, columns=cabecalho, encoding="utf-8")
 
     try:
         last_updates_path = arquivo.parent / "last_updates.json"
@@ -217,24 +226,25 @@ def salvar_csv(
                     last_updates = json.load(lf)
             except Exception:
                 pass
-        if registros:
-            date_col = None
-            for candidate in ["data_captura", "data_base", "AnoMes", "data"]:
-                if candidate in cabecalho:
-                    date_col = candidate
-                    break
-            if date_col:
-                datas = [r.get(date_col) for r in todas if r.get(date_col)]
-                if datas:
-                    last_updates[arquivo.name] = {
-                        "min": min(datas),
-                        "max": max(datas)
-                    }
-                    with last_updates_path.open("w", encoding="utf-8") as lf:
-                        json.dump(last_updates, lf, indent=2, ensure_ascii=False)
-                    last_updates_js_path = arquivo.parent / "last_updates.js"
-                    with last_updates_js_path.open("w", encoding="utf-8") as lf:
-                        lf.write(f"window.PULSEIFDATA_LAST_UPDATES = {json.dumps(last_updates, indent=2, ensure_ascii=False)};\n")
+        
+        date_col = None
+        for candidate in ["data_captura", "data_base", "AnoMes", "data"]:
+            if candidate in cabecalho:
+                date_col = candidate
+                break
+        if date_col and date_col in df_final.columns:
+            datas = df_final[date_col].dropna().unique()
+            datas = [str(d) for d in datas if str(d).strip()]
+            if datas:
+                last_updates[arquivo.name] = {
+                    "min": min(datas),
+                    "max": max(datas)
+                }
+                with last_updates_path.open("w", encoding="utf-8") as lf:
+                    json.dump(last_updates, lf, indent=2, ensure_ascii=False)
+                last_updates_js_path = arquivo.parent / "last_updates.js"
+                with last_updates_js_path.open("w", encoding="utf-8") as lf:
+                    lf.write(f"window.PULSEIFDATA_LAST_UPDATES = {json.dumps(last_updates, indent=2, ensure_ascii=False)};\n")
     except Exception as e:
         log.warning(f"Não foi possível atualizar last_updates.json/js: {e}")
 
@@ -260,7 +270,7 @@ def salvar_csv(
             return "str"
 
         filtered_cols = [c for c in cabecalho if c not in ("conjunto", "arquivo_origem", "registro_hash", "dt_captura")]
-        first_reg = registros[0] if registros else {}
+        first_reg = df_final.iloc[0].to_dict() if not df_final.empty else {}
         fields = []
         for c in filtered_cols:
             t_badge = get_type_badge(c)
@@ -301,6 +311,6 @@ def salvar_csv(
 
     log.info(
         f"CSV atualizado → {arquivo} | "
-        f"{len(registros)} novos registros salvos"
+        f"{len(df_novos)} novos registros salvos"
         + (f" | {substituidas} linha(s) antigas substituídas" if substituidas else "")
     )

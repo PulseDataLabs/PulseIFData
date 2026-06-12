@@ -4,3 +4,5 @@ pyyaml
 python-dotenv
 pytest
 requests-mock
+polars
+pyarrow

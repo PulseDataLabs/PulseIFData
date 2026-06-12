@@ -1,7 +1,7 @@
 import calendar
 import sys
 from pathlib import Path
-
+import polars as pl
 import pandas as pd
 import yaml
 
@@ -37,107 +37,97 @@ def _carregar_mapeamento_semantico(mapping_path: Path) -> dict[str, dict]:
     return mapping
 
 
-def _parse_periodo(ano_mes: str) -> str:
-    try:
-        ano = int(ano_mes[:4])
-        mes = int(ano_mes[4:])
-        ultimo_dia = calendar.monthrange(ano, mes)[1]
-        return f"{ano:04d}-{mes:02d}-{ultimo_dia:02d}"
-    except (ValueError, IndexError):
-        return ano_mes
-
-
-def _sanitizar_saldo(val) -> float:
-    if pd.isna(val) or val == "":
-        return 0.0
-    if isinstance(val, (int, float)):
-        return float(val)
-    s = str(val).strip().replace(".", "").replace(",", ".").replace(" ", "")
-    try:
-        return float(s)
-    except ValueError:
-        return 0.0
-
-
-def _pivotar_por_conta(
-    df: pd.DataFrame,
-    mapping: dict[str, dict],
-) -> pd.DataFrame:
+def _pivotar_por_conta_pl(df: pl.DataFrame, mapping: dict[str, dict]) -> pl.DataFrame:
     """
-    Transforma linhas (IF × período × conta) em colunas (contas viram campos).
+    Transforma linhas (IF × período × conta) em colunas (contas viram campos) usando Polars.
     """
-    df = df.copy()
-
     if "Conta" not in df.columns or "Saldo" not in df.columns:
         log.warning("Colunas 'Conta' ou 'Saldo' ausentes — pulando pivot")
         return df
 
-    df["Saldo_num"] = df["Saldo"].apply(_sanitizar_saldo)
+    # Sanitizar e converter Saldo para float em Rust
+    saldo_clean = (
+        pl.col("Saldo")
+        .fill_null("0.0")
+        .str.strip_chars()
+        .str.replace_all(".", "", literal=True)
+        .str.replace_all(",", ".", literal=True)
+        .str.replace_all(" ", "", literal=True)
+    )
+    df = df.with_columns(
+        pl.coalesce(
+            pl.col("Saldo").cast(pl.Float64, strict=False),
+            saldo_clean.cast(pl.Float64, strict=False)
+        ).fill_null(0.0).alias("Saldo_num")
+    )
 
-    df["campo_semantico"] = df["Conta"].map(
-        {k: v["campo"] for k, v in mapping.items()}
-    ).fillna(df["Conta"])
+    # Substituir Conta pelo campo semântico correspondente
+    mapping_dict = {k: v["campo"] for k, v in mapping.items() if v.get("campo")}
+    df = df.with_columns(
+        pl.col("Conta").replace_strict(mapping_dict, default=pl.col("Conta")).alias("campo_semantico")
+    )
 
     group_cols = [c for c in ["CodInst", "AnoMes", "data_base", "TipoInstituicao",
                                "NomeRelatorio", "NumeroRelatorio"]
                   if c in df.columns]
 
-    pivoted = df.pivot_table(
+    # Pivot de alta performance em Polars
+    pivoted = df.pivot(
+        on="campo_semantico",
         index=group_cols,
-        columns="campo_semantico",
         values="Saldo_num",
-        aggfunc="sum",
-    ).reset_index()
+        aggregate_function="sum"
+    )
 
-    pivoted.columns.name = None
-    pivoted = pivoted.fillna(0.0)
-
-    return pivoted
+    return pivoted.fill_null(0.0)
 
 
-def _calcular_indicadores(df: pd.DataFrame) -> pd.DataFrame:
-    """Calcula ROE, ROA e outros indicadores derivados."""
-    df = df.copy()
+def _calcular_indicadores_pl(df: pl.DataFrame) -> pl.DataFrame:
+    """Calcula ROE, ROA e outros indicadores de forma vetorizada com Polars."""
+    exprs = []
 
     if "patrimonio_liquido" in df.columns and "lucro_liquido" in df.columns:
-        df["roe_anualizado"] = df.apply(
-            lambda r: (r["lucro_liquido"] / r["patrimonio_liquido"] * 4)
-            if r["patrimonio_liquido"] != 0 else 0.0,
-            axis=1,
+        exprs.append(
+            pl.when(pl.col("patrimonio_liquido") != 0)
+            .then(pl.col("lucro_liquido") / pl.col("patrimonio_liquido") * 4)
+            .otherwise(0.0)
+            .alias("roe_anualizado")
         )
 
     if "ativo_total" in df.columns and "lucro_liquido" in df.columns:
-        df["roa_anualizado"] = df.apply(
-            lambda r: (r["lucro_liquido"] / r["ativo_total"] * 4)
-            if r["ativo_total"] != 0 else 0.0,
-            axis=1,
+        exprs.append(
+            pl.when(pl.col("ativo_total") != 0)
+            .then(pl.col("lucro_liquido") / pl.col("ativo_total") * 4)
+            .otherwise(0.0)
+            .alias("roa_anualizado")
         )
 
     if "resultado_operacional" in df.columns and "ativo_total" in df.columns:
-        df["nim_margem_financeira"] = df.apply(
-            lambda r: (r["resultado_operacional"] / r["ativo_total"] * 4)
-            if r["ativo_total"] != 0 else 0.0,
-            axis=1,
+        exprs.append(
+            pl.when(pl.col("ativo_total") != 0)
+            .then(pl.col("resultado_operacional") / pl.col("ativo_total") * 4)
+            .otherwise(0.0)
+            .alias("nim_margem_financeira")
         )
+
+    if exprs:
+        df = df.with_columns(exprs)
 
     return df
 
 
-def _join_cadastro(
-    df: pd.DataFrame,
+def _join_cadastro_pl(
+    df: pl.DataFrame,
     cadastro_path: Path,
     modo: str = "estrito",
-) -> pd.DataFrame:
-    """
-    Join estrito (A): CodInst + AnoMes.
-    Se cadastro_path não existir, retorna df original.
-    """
+) -> pl.DataFrame:
+    """Realiza junção com a tabela de cadastro utilizando Polars."""
     if not cadastro_path.exists():
         log.warning(f"Cadastro não encontrado: {cadastro_path} — pulando join")
         return df
 
-    df_cad = pd.read_csv(cadastro_path, dtype=str)
-    if df_cad.empty:
+    df_cad = pl.read_csv(cadastro_path, schema_overrides={"CodInst": pl.String})
+    if df_cad.is_empty():
         return df
 
     rename_map = {}
@@ -156,29 +146,19 @@ def _join_cadastro(
         elif "conglomerado" in col_lower:
             rename_map[col] = "Conglomerado"
 
-    df_cad = df_cad.rename(columns=rename_map)
+    df_cad = df_cad.rename(rename_map)
     cad_cols = ["CodInst", "NomeInstituicao", "Segmento", "UF", "Municipio", "Conglomerado"]
-    cad_cols = [c for c in cad_cols if c in df_cad.columns]
+    if "AnoMes" in df_cad.columns and modo == "estrito":
+        cad_cols.append("AnoMes")
 
-    if modo == "estrito" and "AnoMes" not in df_cad.columns:
-        if "Data" in df_cad.columns:
-            df_cad["AnoMes"] = df_cad["Data"].astype(str).str[:6]
-        else:
-            log.warning("Cadastro sem AnoMes — join apenas por CodInst")
-            df_merged = df.merge(
-                df_cad[cad_cols].drop_duplicates(subset=["CodInst"]),
-                on="CodInst", how="left",
-            )
-            return df_merged
+    cad_cols = [c for c in cad_cols if c in df_cad.columns]
+    df_cad = df_cad.select(cad_cols).unique()
 
     if modo == "estrito" and "AnoMes" in df_cad.columns:
-        join_cols = [c for c in ["CodInst", "AnoMes"] if c in df.columns]
-        df_merged = df.merge(df_cad, on=join_cols, how="left", suffixes=("", "_cad"))
+        df_merged = df.join(df_cad, on=["CodInst", "AnoMes"], how="left")
     else:
-        df_merged = df.merge(
-            df_cad[cad_cols].drop_duplicates(subset=["CodInst"]),
-            on="CodInst", how="left",
-        )
+        df_cad_unique = df_cad.select([c for c in cad_cols if c != "AnoMes"]).unique(subset=["CodInst"])
+        df_merged = df.join(df_cad_unique, on="CodInst", how="left")
 
     log.info(f"Join cadastro: {len(df)} → {len(df_merged)} linhas")
     return df_merged
@@ -192,51 +172,51 @@ def normalizar(
 ) -> pd.DataFrame:
     section("Normalização: raw → processed (pivot semântico)")
 
-    consolidated_path = raw_dir.parent / "bacen_ifdata.csv"
-    raw_files = sorted(raw_dir.glob("ifdata_rel*.csv"))
+    # Busca arquivos Parquet gerados
+    raw_files = sorted(raw_dir.glob("ifdata_rel*.parquet"))
 
     if not raw_files:
-        if consolidated_path.exists():
-            log.info(f"Checkpoints ausentes — lendo consolidado: {consolidated_path}")
-            raw_files = [consolidated_path]
-        else:
-            log.warning(f"Nenhum arquivo bruto em {raw_dir} e nem consolidado")
-            log.info("Execute a extração primeiro: python run_all.py --scraper-only")
-            return pd.DataFrame()
+        log.warning(f"Nenhum arquivo bruto Parquet em {raw_dir}")
+        log.info("Execute a extração primeiro: python run_all.py --scraper-only")
+        return pd.DataFrame()
 
-    log.info(f"Lendo {len(raw_files)} arquivos brutos")
+    log.info(f"Lendo {len(raw_files)} arquivos brutos Parquet...")
+    df_raw = pl.read_parquet(raw_files)
 
-    frames = []
-    for fpath in raw_files:
-        try:
-            df = pd.read_csv(fpath, dtype=str, keep_default_na=False)
-            if df.empty:
-                print_skip(f"{fpath.name} — vazio")
-                continue
-            if "AnoMes" in df.columns:
-                df["data_base"] = df["AnoMes"].apply(_parse_periodo)
-            frames.append(df)
-        except Exception as e:
-            print_warn(f"{fpath.name} — erro: {e}")
-
-    if not frames:
+    if df_raw.is_empty():
         log.error("Nenhum dado para processar.")
         return pd.DataFrame()
 
-    df_raw = pd.concat(frames, ignore_index=True)
+    # Geração vetorizada da data base em Polars
+    if "AnoMes" in df_raw.columns:
+        df_raw = df_raw.with_columns(
+            ano = pl.col("AnoMes").str.slice(0, 4),
+            mes = pl.col("AnoMes").str.slice(4, 2)
+        )
+        df_raw = df_raw.with_columns(
+            dia = pl.col("mes").replace_strict(
+                {"03": "31", "06": "30", "09": "30", "12": "31", "01": "31", "02": "28"},
+                default="30"
+            )
+        )
+        df_raw = df_raw.with_columns(
+            data_base = pl.col("ano") + "-" + pl.col("mes") + "-" + pl.col("dia")
+        ).drop(["ano", "mes", "dia"])
+
     log.info(f"Raw consolidado: {len(df_raw)} linhas")
 
-    df_pivoted = _pivotar_por_conta(df_raw, mapping)
+    df_pivoted = _pivotar_por_conta_pl(df_raw, mapping)
     log.info(f"Pivoted: {len(df_pivoted)} linhas × {len(df_pivoted.columns)} colunas")
 
-    df_indicadores = _calcular_indicadores(df_pivoted)
+    df_indicadores = _calcular_indicadores_pl(df_pivoted)
     log.info("Indicadores calculados: ROE, ROA, NIM")
 
     if cadastro_path and cadastro_path.exists():
-        df_final = _join_cadastro(df_indicadores, cadastro_path, modo="estrito")
+        df_final = _join_cadastro_pl(df_indicadores, cadastro_path, modo="estrito")
     else:
         df_final = df_indicadores
 
+    # Ordenar colunas
     cols_ordem = ["data_base", "AnoMes", "CodInst", "TipoInstituicao",
                   "NomeInstituicao", "Segmento", "UF", "Conglomerado",
                   "ativo_total", "carteira_credito", "patrimonio_liquido",
@@ -245,23 +225,22 @@ def normalizar(
                   "nim_margem_financeira"]
     cols_presentes = [c for c in cols_ordem if c in df_final.columns]
     cols_restantes = [c for c in df_final.columns if c not in cols_ordem]
-    df_final = df_final[cols_presentes + cols_restantes]
-
-    df_final = df_final.drop_duplicates().reset_index(drop=True)
+    df_final = df_final.select(cols_presentes + cols_restantes).unique()
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    df_final.to_csv(output_path, index=False, encoding="utf-8")
+    df_final.write_csv(output_path)
 
     log.info(
         f"Consolidado: {len(df_final)} linhas × {len(df_final.columns)} colunas"
         f" → {output_path}"
     )
 
-    return df_final
+    # Retorna DataFrame pandas para compatibilidade externa
+    return df_final.to_pandas()
 
 
 def main():
-    banner("Normalizador IFData", "Pivot semântico + join cadastro + indicadores")
+    banner("Normalizador IFData", "Pivot semântico + join cadastro + indicadores (Polars)")
 
     root_dir = Path(__file__).resolve().parents[1]
     settings = _carregar_settings()
