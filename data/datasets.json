@@ -46,29 +46,5 @@
     "freq": "Trimestral",
     "fonte": "Pulse",
     "cat": "derivadas"
-  },
-  {
-    "id": "bacen_conglomerados",
-    "name": "bacen_conglomerados.csv",
-    "desc": "Lista e composição de conglomerados financeiros autorizados pelo Banco Central",
-    "freq": "Mensal",
-    "fonte": "BACEN",
-    "cat": "cadastro"
-  },
-  {
-    "id": "bacen_balancetes_bancos",
-    "name": "bacen_balancetes_bancos.csv",
-    "desc": "Detalhamento contábil mensal (Plano de Contas COSIF) de todos os bancos",
-    "freq": "Mensal",
-    "fonte": "BACEN",
-    "cat": "balanco"
-  },
-  {
-    "id": "bacen_parcelas_capital_basileia",
-    "name": "bacen_parcelas_capital_basileia.csv",
-    "desc": "Informações de requerimento de capital regulatório e parcelas de RWA (Basileia)",
-    "freq": "Trimestral",
-    "fonte": "BACEN",
-    "cat": "balanco"
   }
 ]
