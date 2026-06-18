@@ -285,6 +285,10 @@ def main(
             df = run_normalizer(raw_dir, output_path, mapping, cadastro_path)
             if not df.empty:
                 print_done(f"Consolidado: {output_path} ({len(df)} linhas)")
+
+            from scripts.generate_lite import gerar_lite
+            lite_output = root_dir / "data" / "processed" / "ifdata_historical_lite.csv"
+            gerar_lite(output_path, lite_output, anos=3)
         except Exception as e:
             logger.error(red(f"  ✖  Erro na normalização: {e}"))
 

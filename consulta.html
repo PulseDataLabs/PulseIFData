@@ -340,7 +340,7 @@ const BASE = window.location.hostname === 'localhost' || window.location.hostnam
   ? './' 
   : 'https://raw.githubusercontent.com/PulseDataLabs/PulseIFData/main/';
 const DATASETS = {
-  'historico':     { url: BASE + 'data/processed/ifdata_historical.csv', label: 'Série Histórica' },
+  'historico':     { url: BASE + 'data/processed/ifdata_historical_lite.csv', label: 'Série Histórica' },
   'cadastro':      { url: BASE + 'data/cadastro_ifs.csv', label: 'Cadastro IFs' },
   'conglomerados': { url: BASE + 'data/bacen_conglomerados.csv', label: 'Conglomerados Financeiros' },
   'balancetes':    { url: BASE + 'data/bacen_balancetes_bancos.csv', label: 'Balancetes COSIF' },

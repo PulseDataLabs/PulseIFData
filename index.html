@@ -819,7 +819,7 @@
 BASE = <span class="cm">"https://raw.githubusercontent.com/PulseDataLabs/PulseIFData/main/"</span>
 
 <span class="cm"># Série histórica consolidada (10+ anos)</span>
-df = pd.read_csv(BASE + <span class="cm">"data/processed/ifdata_historical.csv"</span>)
+df = pd.read_csv(BASE + <span class="cm">"data/processed/ifdata_historical_lite.csv"</span>)
 
 <span class="cm"># Rankings mais recentes</span>
 df_rank = pd.read_csv(BASE + <span class="cm">"data/derivadas_rankings.csv"</span>)</pre>
@@ -903,7 +903,7 @@ const BASE_URL = 'https://raw.githubusercontent.com/PulseDataLabs/PulseIFData/ma
 const DS = [
   {
     name: 'ifdata_historical.csv',
-    path: 'data/processed/ifdata_historical.csv',
+    path: 'data/processed/ifdata_historical_lite.csv',
     desc: 'Série histórica consolidada — pivot semântico Cosif, ROE/ROA/NIM calculados',
     freq: 'Trimestral', src: 'SCR + Cosif', cat: 'balanco'
   },
