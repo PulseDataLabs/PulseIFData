@@ -28,6 +28,7 @@ class BacenIfdataScraper(BaseScraper):
     enabled = True
     phase = 1
     accumulate = False
+    save_csv = False
 
     title = "BACEN — IFData (todos os relatórios)"
     description = "Dados do IFData/BACEN: balanço, resultado, crédito, cadastro e capital. Coletados via API OData Olinda com paginação e checkpointing trimestral."
@@ -75,9 +76,10 @@ class BacenIfdataScraper(BaseScraper):
             f"× {len(periodos)} trimestres ({start_year}-{periodos[0] if periodos else 'N/A'})"
         )
 
-        frames_totais = []
         total = len(reports) * len(inst_types) * len(periodos)
         concluido = 0
+        novos_downloads = 0
+        checkpoints_pulados = 0
 
         for relatorio in reports:
             rel_id = relatorio["id"]
@@ -89,24 +91,20 @@ class BacenIfdataScraper(BaseScraper):
 
                 for periodo in periodos:
                     concluido += 1
-                    self.logger.info(
-                        f"[{concluido}/{total}] Rel {rel_id} ({rel_name}) | "
-                        f"Tipo {tipo_codigo} ({tipo_label}) | "
-                        f"Período {periodo}"
-                    )
 
                     raw_filename = f"ifdata_rel{rel_id}_{periodo}_tipo{tipo_codigo}.parquet"
                     raw_path = self.raw_dir / raw_filename
 
                     if raw_path.exists() and raw_path.stat().st_size > 0:
                         print_skip(f"Checkpoint: {raw_filename}")
-                        try:
-                            df_existing = pd.read_parquet(raw_path)
-                            if not df_existing.empty:
-                                frames_totais.append(df_existing)
-                                continue
-                        except Exception:
-                            pass
+                        checkpoints_pulados += 1
+                        continue
+
+                    self.logger.info(
+                        f"[{concluido}/{total}] Rel {rel_id} ({rel_name}) | "
+                        f"Tipo {tipo_codigo} ({tipo_label}) | "
+                        f"Período {periodo}"
+                    )
 
                     url = f"{base_url}/{valores_endpoint}"
                     params = {
@@ -128,20 +126,14 @@ class BacenIfdataScraper(BaseScraper):
                         )
                         continue
 
-                    df["AnoMes"] = str(periodo)
-                    df["TipoInstituicao"] = tipo_codigo
-                    df["NomeRelatorio"] = rel_name
-                    df["NumeroRelatorio"] = rel_id
-
                     elapsed = time.time() - t0
                     print_done(f"{raw_filename} — {len(df)} registros", elapsed=elapsed)
-
-                    frames_totais.append(df)
+                    novos_downloads += 1
                     time.sleep(rate_limit)
 
-        if not frames_totais:
-            raise RuntimeError("Nenhum dado retornado da API IFData.")
-
-        df_final = pd.concat(frames_totais, ignore_index=True)
-        log.info(f"Total consolidado: {len(df_final)} registros de {len(frames_totais)} chunks")
-        return df_final
+        total_arquivos = len(list(self.raw_dir.glob("ifdata_rel*.parquet")))
+        log.info(
+            f"Total consolidado no disco: {total_arquivos} arquivos parquet "
+            f"(novos: {novos_downloads}, pulados: {checkpoints_pulados})"
+        )
+        return pd.DataFrame()

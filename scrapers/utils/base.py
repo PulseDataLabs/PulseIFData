@@ -12,6 +12,7 @@ class BaseScraper:
     name: str = ""
     accumulate: bool = True
     chaves_dedup: list[str] | None = None
+    save_csv: bool = True
 
     title: str = ""
     description: str = ""
@@ -45,6 +46,13 @@ class BaseScraper:
         t0 = time.time()
         try:
             df = self.fetch()
+
+            if not getattr(self, "save_csv", True):
+                elapsed = time.time() - t0
+                if not is_pipeline:
+                    print_done(f"Executado com sucesso (sem salvar CSV)", elapsed=elapsed)
+                return
+
             if df is None or (isinstance(df, pd.DataFrame) and df.empty):
                 self.logger.warning("Nenhum dado retornado para salvar.")
                 return
