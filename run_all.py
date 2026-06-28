@@ -334,8 +334,13 @@ if __name__ == "__main__":
     parser.add_argument("--derivadas-only", action="store_true", help="Apenas métricas derivadas")
     parser.add_argument("--sequential", action="store_true", help="Execução sequencial")
     parser.add_argument("--generate-catalog", action="store_true", help="Regenera datasets.json e sai")
+    parser.add_argument("--skip-db", action="store_true", help="Pula a carga de dados no Oracle DB")
 
     args = parser.parse_args()
+
+    if args.skip_db:
+        import os
+        os.environ["SKIP_ORACLE_DB"] = "1"
 
     if args.generate_catalog:
         _banner()

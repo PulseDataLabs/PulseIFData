@@ -190,6 +190,21 @@ def gerar_tudo(
         resultados["variacoes"] = var
 
     print_done(f"{len(resultados)} métricas geradas")
+
+    # Upload para o Oracle DB se configurado
+    try:
+        from utils.db import upload_dataframe
+        if not ms.empty:
+            upload_dataframe(ms, "IFDATA_MARKET_SHARE")
+        if not hhi.empty:
+            upload_dataframe(hhi, "IFDATA_HHI")
+        if not rank.empty:
+            upload_dataframe(rank, "IFDATA_RANKINGS")
+        if not var.empty:
+            upload_dataframe(var, "IFDATA_VARIACOES")
+    except Exception as e:
+        log.warning(f"Não foi possível enviar as métricas derivadas para o Oracle DB: {e}")
+
     return resultados
 
 

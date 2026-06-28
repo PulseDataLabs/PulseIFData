@@ -7,3 +7,4 @@ pytest
 requests-mock
 polars
 pyarrow
+oracledb

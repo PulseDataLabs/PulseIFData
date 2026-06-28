@@ -235,8 +235,17 @@ def normalizar(
         f" → {output_path}"
     )
 
+    df_pandas = df_final.to_pandas()
+
+    # Upload para o Oracle DB se configurado
+    try:
+        from utils.db import upload_dataframe
+        upload_dataframe(df_pandas, "IFDATA_HISTORICAL")
+    except Exception as e:
+        log.warning(f"Não foi possível enviar os dados normalizados para o Oracle DB: {e}")
+
     # Retorna DataFrame pandas para compatibilidade externa
-    return df_final.to_pandas()
+    return df_pandas
 
 
 def main():

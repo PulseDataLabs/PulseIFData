@@ -17,6 +17,13 @@ jobs:
       pages: write
       id-token: write
 
+    env:
+      ORACLE_DB_USER: ${{ secrets.ORACLE_DB_USER }}
+      ORACLE_DB_PASSWORD: ${{ secrets.ORACLE_DB_PASSWORD }}
+      ORACLE_DB_DSN: ${{ secrets.ORACLE_DB_DSN }}
+      ORACLE_DB_WALLET_DIR: ${{ github.workspace }}/wallet
+      ORACLE_DB_WALLET_PASSWORD: ${{ secrets.ORACLE_DB_WALLET_PASSWORD }}
+
     steps:
       - uses: actions/checkout@v6
 
@@ -28,6 +35,13 @@ jobs:
           cache: 'pip'
 
       - run: pip install -r requirements.txt
+
+      - name: Configurar Wallet do Oracle Cloud
+        run: |
+          mkdir -p ${{ github.workspace }}/wallet
+          echo "${{ secrets.ORACLE_DB_WALLET_BASE64 }}" | base64 -d > ${{ github.workspace }}/wallet.zip
+          unzip -o ${{ github.workspace }}/wallet.zip -d ${{ github.workspace }}/wallet
+        if: "${{ secrets.ORACLE_DB_WALLET_BASE64 != '' }}"
 
       - name: Extrair dados IFData
         run: python run_all.py --scraper-only --sequential

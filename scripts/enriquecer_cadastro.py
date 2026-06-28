@@ -97,6 +97,13 @@ def enriquecer(raw_dir: Path, output_path: Path | None = None) -> pd.DataFrame:
         df.to_csv(output_path, index=False, encoding="utf-8")
         log.info(f"Cadastro salvo: {output_path}")
 
+    # Upload para o Oracle DB se configurado
+    try:
+        from utils.db import upload_dataframe
+        upload_dataframe(df, "CADASTRO_IFS")
+    except Exception as e:
+        log.warning(f"Não foi possível enviar o cadastro de IFs para o Oracle DB: {e}")
+
     return df
 
 
