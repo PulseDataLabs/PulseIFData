@@ -8,3 +8,4 @@ requests-mock
 polars
 pyarrow
 oracledb
+sqlalchemy

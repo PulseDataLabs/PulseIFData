@@ -11,22 +11,30 @@ load_dotenv()
 
 log = logging.getLogger("utils.db")
 
-# Tentar importar oracledb silenciosamente
+# Tentar importar oracledb e sqlalchemy silenciosamente
 try:
     import oracledb
+    from sqlalchemy import create_engine
     # Habilitar o Thin Mode explicitamente (padrão no oracledb, mas garante que não tentará Thick)
     oracledb.init_oracle_client = None 
 except ImportError:
-    log.warning("oracledb não está instalado. Cargas no banco serão ignoradas.")
+    log.warning("oracledb ou sqlalchemy não estão instalados. Cargas no banco serão ignoradas.")
     oracledb = None
+    create_engine = None
 
-def get_connection():
+# Cache para reutilização do SQLAlchemy engine (Pooling de conexões ativo)
+_engine = None
+
+def get_engine():
     """
-    Cria e retorna uma conexão com o Oracle Cloud Autonomous Database.
-    Garante o uso do Thin Mode (sem necessidade de Oracle Instant Client instalado).
+    Cria e retorna o SQLAlchemy Engine configurado para o Oracle Database.
     """
-    if oracledb is None:
-        raise ImportError("O pacote 'oracledb' não está instalado. Instale-o via pip install oracledb.")
+    global _engine
+    if _engine is not None:
+        return _engine
+
+    if oracledb is None or create_engine is None:
+        raise ImportError("Os pacotes 'oracledb' e 'sqlalchemy' devem estar instalados.")
 
     user = os.getenv("ORACLE_DB_USER")
     password = os.getenv("ORACLE_DB_PASSWORD")
@@ -40,27 +48,40 @@ def get_connection():
             "ORACLE_DB_PASSWORD e ORACLE_DB_DSN no ambiente ou no arquivo .env."
         )
 
-    log.info(f"Conectando ao banco Oracle como '{user}' (Thin Mode)...")
+    # Codificar caracteres especiais do usuário e senha para evitar erros no parser da URL
+    import urllib.parse
+    safe_user = urllib.parse.quote_plus(user)
+    safe_password = urllib.parse.quote_plus(password)
     
+    # URL de conexão para o dialeto oracle+oracledb
+    url = f"oracle+oracledb://{safe_user}:{safe_password}@{dsn}"
+
+    connect_args = {}
     if wallet_dir and os.path.exists(wallet_dir) and os.path.isdir(wallet_dir) and os.listdir(wallet_dir):
-        # Conexão com Wallet (Mutual TLS)
         wallet_dir_path = os.path.abspath(wallet_dir)
-        log.info(f"Usando Wallet localizada em: {wallet_dir_path}")
-        return oracledb.connect(
-            user=user,
-            password=password,
-            dsn=dsn,
-            config_dir=wallet_dir_path,
-            wallet_location=wallet_dir_path,
-            wallet_password=wallet_password
-        )
+        log.info(f"Configurando Engine com Wallet mTLS localizada em: {wallet_dir_path}")
+        connect_args["config_dir"] = wallet_dir_path
+        connect_args["wallet_location"] = wallet_dir_path
+        if wallet_password:
+            connect_args["wallet_password"] = wallet_password
     else:
-        # Conexão direta por TLS (One-Way TLS)
-        return oracledb.connect(
-            user=user,
-            password=password,
-            dsn=dsn
-        )
+        log.info("Configurando Engine para One-Way TLS direto (sem Wallet)...")
+
+    # Criação do engine com pool_pre_ping para resiliência de conexões instáveis
+    _engine = create_engine(
+        url,
+        connect_args=connect_args,
+        pool_pre_ping=True
+    )
+    return _engine
+
+def get_connection():
+    """
+    Cria e retorna uma conexão bruta (DBAPI/oracledb) obtida a partir do SQLAlchemy Engine.
+    Mantém compatibilidade com inserções em lote executemany de alta performance.
+    """
+    engine = get_engine()
+    return engine.raw_connection()
 
 def sanitize_column_name(col_name: str) -> str:
     """
