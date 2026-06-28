@@ -533,6 +533,11 @@
         <h3>Integrável com o portfólio Pulse</h3>
         <p>Cruzamento nativo com <a href="https://pulsedatalabs.github.io/PulseFlat/">PulseFlat</a> (SELIC, CDI) para análises como NIM ajustado ao ciclo de juros.</p>
       </div>
+      <div class="sobre-card">
+        <span class="sc-emoji">💾</span>
+        <h3>Persistência em Banco de Dados Relacional</h3>
+        <p>Integração nativa com <strong>Oracle Cloud Autonomous Database</strong> (via SQLAlchemy e oracledb Thin). Dados de histórico e tabelas auxiliares persistidos em tabelas prontas para consultas SQL robustas.</p>
+      </div>
       <div class="sobre-card warn-card">
         <span class="sc-emoji">⚠️</span>
         <h3>Limitação: endpoint de cadastro instável</h3>
@@ -613,9 +618,9 @@
       <div class="pipeline-step">
         <div class="step-num">05</div>
         <div class="step-body">
-          <h3>Publicação e status</h3>
-          <p>CSVs versionados em <code>git commit → push</code>. Catálogo <code>datasets.json</code> regenerado automaticamente. Status da execução salvo em <code>pipeline_status.json</code> e <code>pipeline_status.js</code> — carregado pelo dashboard em tempo real.</p>
-          <span class="tag">git · GitHub Pages · pipeline_status.js</span>
+          <h3>Publicação, banco de dados e status</h3>
+          <p>CSVs versionados em <code>git commit → push</code>. Atualização incremental dos dados no <strong>Oracle Cloud Autonomous Database</strong> por blocos usando SQLAlchemy e drivers Thin de alta performance. Catálogo <code>datasets.json</code> regenerado automaticamente. Status da execução salvo em <code>pipeline_status.js</code>.</p>
+          <span class="tag">Oracle DB · git · GitHub Pages · pipeline_status.js</span>
         </div>
       </div>
     </div>

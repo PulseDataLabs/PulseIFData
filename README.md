@@ -43,8 +43,11 @@ PulseIFData/
 │   ├── derivadas.py            # Market share, HHI, rankings, variações QoQ/YoY
 │   ├── enriquecer_cadastro.py  # Enriquecimento de cadastro com fallback
 │   ├── generate_catalog.py     # Gera datasets.json
+│   ├── upload_meta_csvs.py     # Carrega CSVs auxiliares/configuração no Oracle DB
 │   └── utils/ux.py             # Terminal UX colorida
-├── utils/base.py               # salvar_csv, monkey-patch HTTP, helpers
+├── utils/
+│   ├── base.py                 # salvar_csv, monkey-patch HTTP, helpers
+│   └── db.py                   # Conectividade e persistência no Oracle DB via SQLAlchemy
 ├── config/
 │   ├── settings.yaml           # Endpoints OData, relatórios, range temporal
 │   ├── cosif_semantic_mapping.csv  # 35 contas COSIF mapeadas semanticamente
@@ -55,7 +58,7 @@ PulseIFData/
 │   ├── cadastro_ifs.csv        # Cadastro enriquecido de IFs
 │   ├── datasets.json           # Catálogo de datasets
 │   └── pipeline_status.json    # Status da última execução
-├── .github/workflows/main.yml  # GitHub Actions (cron trimestral + Pages)
+├── .github/workflows/main.yml  # GitHub Actions (cron trimestral + Pages + Oracle DB Load)
 ├── run_all.py                  # Orquestrador do pipeline
 ├── index.html                  # Dashboard estático (GitHub Pages)
 └── tests/                      # Testes unitários
@@ -64,27 +67,35 @@ PulseIFData/
 ### Pipeline
 
 ```mermaid
-flowchart LR
+flowchart TD
     A[API OData olinda.bcb.gov.br] --> B[scrapers/bacen_ifdata.py]
     B --> C[data/raw/ checkpoints]
     C --> D[scripts/normalizer.py]
     C --> E[scripts/enriquecer_cadastro.py]
-    D --> F[data/processed/ifdata_historical_10y.csv]
+    D --> F[data/processed/ifdata_historical_lite.csv]
     D --> G[scripts/derivadas.py]
     G --> H[data/derivadas_*.csv]
     E --> I[data/cadastro_ifs.csv]
-    F --> J[index.html (dashboard)]
+    
+    %% Carga do Banco de Dados
+    F --> K[(Oracle Cloud Autonomous Database)]
+    H --> K
+    I --> K
+    
+    %% Interface Web
+    F --> J[index.html / consulta.html]
     H --> J
     I --> J
 ```
 
 **Fluxo:**
 
-1. **Detecção**: pipeline cron do GitHub Actions verifica periodicamente novo trimestre
-2. **Extração**: itera por ano → trimestre → relatório → tipo de IF, com paginação `$top`/`$skip` e checkpointing em `data/raw/`
-3. **Normalização**: pivota COSIF accounts → colunas semânticas, calcula ROE/ROA/NIM, join cadastro
-4. **Derivadas**: market share, HHI (0–10000), rankings, variações QoQ + YoY
-5. **Publicação**: CSVs versionados no git, dashboard via GitHub Pages
+1. **Detecção**: pipeline cron do GitHub Actions verifica periodicamente novo trimestre.
+2. **Extração**: itera por ano → trimestre → relatório → tipo de IF, com paginação `$top`/`$skip` e checkpointing em `data/raw/`.
+3. **Normalização**: pivota COSIF accounts → colunas semânticas, calcula ROE/ROA/NIM, join cadastro.
+4. **Derivadas**: calcula de forma vetorizada market share, HHI (0–10000), rankings, variações QoQ + YoY.
+5. **Persistência**: salva arquivos locais CSV para o dashboard estático e executa a carga paralela/incremental por lotes no **Oracle Cloud Autonomous Database** via SQLAlchemy Core.
+6. **Publicação**: publica o dashboard atualizado via GitHub Pages.
 
 ### Relatórios disponíveis
 
@@ -121,7 +132,7 @@ Série histórica desde **2014** (10+ anos), atualização trimestral.
 - **Relatórios de crédito** (7–13) retornam vazios para tipo 1 (conglomerados prudenciais).
 - **COSIF** sofreu quebra de série em março/2025 — `config/cosif_de_para.csv` mantém as equivalências.
 
-## Instalação
+## Instalação e Configuração
 
 ```bash
 # Clone
@@ -130,9 +141,32 @@ cd PulseIFData
 
 # Dependências
 pip install -r requirements.txt
+```
 
-# Pipeline completo (extração + normalização + derivadas + catálogo)
+### Configuração do Banco de Dados Oracle
+
+O pipeline agora integra-se nativamente com a sua instância do **Oracle Cloud Autonomous Database** usando **SQLAlchemy** e oracledb Thin.
+
+Crie um arquivo `.env` na raiz do projeto (este arquivo é ignorado pelo Git) e cadastre suas variáveis de ambiente:
+
+```env
+ORACLE_DB_USER=ADMIN
+ORACLE_DB_PASSWORD=sua_senha_do_banco
+ORACLE_DB_DSN=ntixxtliyupeq3yw_high
+ORACLE_DB_WALLET_DIR=wallet/
+ORACLE_DB_WALLET_PASSWORD=sua_senha_da_wallet  # opcional
+```
+
+Se o diretório `wallet/` contiver os arquivos de credenciais descompactados (`cwallet.sso`, `tnsnames.ora`, etc.), a conexão usará **Mutual TLS (mTLS)** automaticamente. Caso o diretório esteja vazio ou ausente, o pipeline tentará se conectar via **One-Way TLS** direta.
+
+### Comandos do Orquestrador
+
+```bash
+# Execução padrão (extração + normalização + derivadas + catálogo + carga no banco)
 python run_all.py
+
+# Ignorar carga de banco de dados (ideal para testes locais rápidos)
+python run_all.py --skip-db
 
 # Apenas extração
 python run_all.py --scraper-only
@@ -143,17 +177,34 @@ python run_all.py --normalize-only
 # Apenas derivadas
 python run_all.py --derivadas-only
 
-# Regenerar catálogo
+# Execução apenas de upload de tabelas auxiliares/CSVs
+python scripts/upload_meta_csvs.py
+
+# Regenerar catálogo de metadados
 python run_all.py --generate-catalog
 ```
 
 ## Consumo dos dados
 
+### Via Banco de Dados Oracle (SQL)
+
+Você pode consultar as tabelas relacionais geradas diretamente com qualquer cliente SQL conectado à sua instância Oracle Cloud:
+
+*   `IFDATA_HISTORICAL`: Série histórica completa consolidada.
+*   `IFDATA_MARKET_SHARE`: Market share calculado por IF.
+*   `IFDATA_HHI`: Concentração de mercado (HHI) por trimestre.
+*   `IFDATA_RANKINGS`: Ranking de instituições por ativo e carteira de crédito.
+*   `IFDATA_VARIACOES`: Variações trimestrais QoQ e anuais YoY.
+*   `CADASTRO_IFS`: Cadastro de IFs com mapeamento de CNPJ e CodInst.
+*   `BACEN_BALANCETES_BANCOS`, `BACEN_CONGLOMERADOS`, etc.: Tabelas auxiliares e de configuração de dados.
+
+### Via API / Pandas (CSVs estáticos)
+
 ```python
 import pandas as pd
 
-# Série histórica consolidada
-url = "https://raw.githubusercontent.com/PulseDataLabs/PulseIFData/main/data/processed/ifdata_historical_10y.csv"
+# Série histórica lite (últimos 3 anos para consumo web)
+url = "https://raw.githubusercontent.com/PulseDataLabs/PulseIFData/main/data/processed/ifdata_historical_lite.csv"
 df = pd.read_csv(url)
 
 # Dataset específico
