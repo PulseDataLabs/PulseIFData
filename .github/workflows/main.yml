@@ -63,6 +63,10 @@ jobs:
           python run_all.py --generate-catalog || true
         continue-on-error: true
 
+      - name: Upload de Metadados e CSVs Auxiliares
+        run: python scripts/upload_meta_csvs.py || true
+        continue-on-error: true
+
       - name: Gerar pipeline_status.js para o dashboard
         run: python run_all.py || true
 

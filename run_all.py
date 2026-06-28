@@ -311,6 +311,14 @@ def main(
     except Exception as e:
         logger.error(red(f"  ✖  Erro ao gerar catálogo: {e}"))
 
+    # Carga de CSVs de metadados e tabelas auxiliares para o banco Oracle
+    if not scraper_only:
+        try:
+            from scripts.upload_meta_csvs import upload_all_csvs
+            upload_all_csvs()
+        except Exception as e:
+            logger.error(red(f"  ✖  Erro no upload de CSVs de metadados para o Oracle DB: {e}"))
+
     print()
     print(_line("═"))
     print(f"  {bold('Pipeline concluído')}  {green('✔')}")

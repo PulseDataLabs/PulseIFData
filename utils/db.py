@@ -101,6 +101,11 @@ def infer_oracle_type(series: pd.Series) -> str:
     
     # Verificar se parece com data
     if "data" in col_name_lower or "date" in col_name_lower or col_name_lower.startswith("dt_"):
+        # Se os valores válidos forem períodos de 6 dígitos (como 202406) ou 4 (como 2024), não deve ser DATE
+        non_nulls = series.dropna().astype(str).str.strip()
+        if not non_nulls.empty:
+            if non_nulls.str.match(r'^\d{6}$').all() or non_nulls.str.match(r'^\d{4}$').all():
+                return "VARCHAR2(4000)"
         return "DATE"
         
     # Verificar tipo de dados Pandas
@@ -111,10 +116,6 @@ def infer_oracle_type(series: pd.Series) -> str:
     elif pd.api.types.is_bool_dtype(series):
         return "NUMBER(1)" # Oracle não possui boolean nativo até 23c, usamos NUMBER(1)
     else:
-        # Se for string, verificar se todos os valores válidos parecem com YYYY-MM-DD
-        non_nulls = series.dropna().astype(str).str.strip()
-        if not non_nulls.empty and non_nulls.str.match(r'^\d{4}-\d{2}-\d{2}$').all():
-            return "DATE"
         return "VARCHAR2(4000)"
 
 def create_table_from_df(cursor, table_name: str, df: pd.DataFrame, clean_cols: dict[str, str]):
@@ -226,6 +227,18 @@ def upload_dataframe(df: pd.DataFrame, table_name: str, batch_size: int = 5000) 
         binds_str = ", ".join([f":{i+1}" for i in range(len(clean_cols))])
         insert_sql = f"INSERT INTO {table_name} ({cols_str}) VALUES ({binds_str})"
         
+        # Identificar quais colunas são do tipo DATE no banco de dados para tratar no insert
+        date_cols = set()
+        try:
+            cursor.execute(
+                "SELECT column_name FROM user_tab_columns WHERE table_name = :1 AND data_type = 'DATE'",
+                [table_name]
+            )
+            date_cols = {row[0].upper() for row in cursor.fetchall()}
+        except Exception:
+            # Fallback para inferência baseada no DataFrame original
+            date_cols = {clean_cols[col] for col in df.columns if infer_oracle_type(df[col]) == "DATE"}
+        
         # 4. Executar a inserção em blocos com limpeza sob demanda para economizar RAM
         total_rows = len(df)
         inserted = 0
@@ -238,17 +251,23 @@ def upload_dataframe(df: pd.DataFrame, table_name: str, batch_size: int = 5000) 
             batch = []
             for row in chunk.itertuples(index=False):
                 clean_row = []
-                for val in row:
+                for idx, val in enumerate(row):
+                    col_orig = df.columns[idx]
+                    col_clean = clean_cols[col_orig]
+                    
                     if val is None or (isinstance(val, float) and (np.isnan(val) or np.isinf(val))) or pd.isna(val):
                         clean_row.append(None)
-                    elif isinstance(val, (pd.Timestamp, datetime)):
-                        clean_row.append(val.date() if hasattr(val, 'date') else val)
-                    elif hasattr(val, 'to_pydatetime'):
-                        clean_row.append(val.to_pydatetime().date())
-                    elif isinstance(val, str) and len(val.strip()) == 10 and val.strip()[4] == '-' and val.strip()[7] == '-':
-                        try:
-                            clean_row.append(datetime.strptime(val.strip(), "%Y-%m-%d").date())
-                        except ValueError:
+                    elif col_clean in date_cols:
+                        if isinstance(val, (pd.Timestamp, datetime)):
+                            clean_row.append(val.date() if hasattr(val, 'date') else val)
+                        elif hasattr(val, 'to_pydatetime'):
+                            clean_row.append(val.to_pydatetime().date())
+                        elif isinstance(val, str) and len(val.strip()) == 10 and val.strip()[4] == '-' and val.strip()[7] == '-':
+                            try:
+                                clean_row.append(datetime.strptime(val.strip(), "%Y-%m-%d").date())
+                            except ValueError:
+                                clean_row.append(val)
+                        else:
                             clean_row.append(val)
                     else:
                         clean_row.append(val)
