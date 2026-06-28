@@ -134,14 +134,50 @@ Série histórica desde **2014** (10+ anos), atualização trimestral.
 
 ## Instalação e Configuração
 
+### 1. Clonar o repositório
 ```bash
-# Clone
 git clone https://github.com/PulseDataLabs/PulseIFData.git
 cd PulseIFData
+```
 
-# Dependências
+### 2. Configurar o Ambiente e Dependências
+
+Escolha uma das opções abaixo para preparar o ambiente virtual do Python:
+
+#### Opção A: Usando `uv` (Recomendado — Moderno e Ultra-rápido)
+
+O [uv](https://github.com/astral-sh/uv) é um gerenciador de pacotes e ambientes Python escrito em Rust, sendo ordens de grandeza mais rápido que o pip tradicional.
+
+```bash
+# Instale o uv globalmente (caso não possua)
+pip install uv  # Ou: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Crie o ambiente virtual (.venv)
+uv venv
+
+# Ative o ambiente virtual
+source .venv/bin/activate       # No Linux/macOS
+# .venv\Scripts\activate        # No Windows
+
+# Instale as dependências de forma instantânea
+uv pip install -r requirements.txt
+```
+
+#### Opção B: Usando `venv` + `pip` Tradicional
+
+```bash
+# Crie o ambiente virtual (.venv)
+python3 -m venv .venv
+
+# Ative o ambiente virtual
+source .venv/bin/activate       # No Linux/macOS
+# .venv\Scripts\activate        # No Windows
+
+# Atualize o pip e instale as dependências
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
+
 
 ### Configuração do Banco de Dados Oracle
 

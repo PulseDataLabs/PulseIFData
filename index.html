@@ -769,8 +769,8 @@
       <div class="setup-step">
         <div class="ss-n">2</div>
         <div class="ss-body">
-          <h4>Instale as dependências</h4>
-          <p><code>pip install -r requirements.txt</code> — apenas pandas, requests, PyYAML e aiohttp.</p>
+          <h4>Configure o ambiente e dependências</h4>
+          <p>Crie o ambiente virtual e instale as dependências usando o <code>uv</code> (recomendado: <code>uv venv && uv pip install -r requirements.txt</code>) ou o <code>pip</code> tradicional.</p>
         </div>
       </div>
       <div class="setup-step">
@@ -805,8 +805,14 @@
 <span class="ck">git clone</span> https://github.com/PulseDataLabs/PulseIFData.git
 <span class="ck">cd</span> PulseIFData
 
-<span class="cm"># 2. Dependências</span>
-<span class="ck">pip install</span> -r requirements.txt
+<span class="cm"># 2. Dependências (usando uv - recomendado)</span>
+<span class="ck">uv venv</span>
+<span class="ck">source</span> .venv/bin/activate
+<span class="ck">uv pip install</span> -r requirements.txt
+
+<span class="cm"># Ou usando pip tradicional:</span>
+<span class="cm"># python3 -m venv .venv && source .venv/bin/activate</span>
+<span class="cm"># pip install --upgrade pip && pip install -r requirements.txt</span>
 
 <span class="cm"># 3. Pipeline completo (extração + normalização + derivadas + catálogo)</span>
 <span class="ck">python</span> run_all.py
