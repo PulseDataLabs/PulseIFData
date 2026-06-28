@@ -230,6 +230,30 @@
       border-radius: 50%; animation: sp .8s linear infinite; margin-bottom: 1rem;
     }
     @keyframes sp { to { transform: rotate(360deg); } }
+    .welcome-box {
+      text-align: center;
+      padding: 4rem 2rem;
+      background: rgba(11, 17, 32, 0.4);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      color: var(--text-2);
+      margin-top: 1rem;
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
+      backdrop-filter: blur(8px);
+    }
+    .welcome-box h3 {
+      color: var(--text);
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -.02em;
+    }
+    .welcome-box p {
+      font-size: 13px;
+      max-width: 440px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
     .error-box {
       background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.3);
       border-radius: 12px; padding: 1.5rem; text-align: center; color: var(--red);
@@ -304,15 +328,15 @@
     <div class="filter-group filter-group-wide">
       <label>Dataset</label>
       <select id="filtro-dataset">
-        <option value="historico">Série Histórica (balanço + indicadores)</option>
-        <option value="cadastro">Cadastro de IFs</option>
-        <option value="conglomerados">Conglomerados Financeiros (Mensal)</option>
-        <option value="balancetes">Balancetes de Bancos COSIF (Mensal)</option>
-        <option value="basileia">Parcelas de Capital Basileia (Trimestral)</option>
-        <option value="rankings">Rankings</option>
-        <option value="market-share">Market Share</option>
-        <option value="hhi">HHI Concentração</option>
-        <option value="var">Variações QoQ/YoY</option>
+        <option value="historico">Série Histórica (balanço + indicadores) [~22 MB]</option>
+        <option value="cadastro">Cadastro de IFs [~40 KB]</option>
+        <option value="conglomerados">Conglomerados Financeiros (Mensal) [~180 KB]</option>
+        <option value="balancetes">Balancetes de Bancos COSIF (Mensal) [~7.0 MB]</option>
+        <option value="basileia">Parcelas de Capital Basileia (Trimestral) [~9.2 MB]</option>
+        <option value="rankings">Rankings [~61.8 MB]</option>
+        <option value="market-share">Market Share [~66.1 MB]</option>
+        <option value="hhi">HHI Concentração [~3 KB]</option>
+        <option value="var">Variações QoQ/YoY [~59.2 MB]</option>
       </select>
     </div>
     <div class="filter-group">
@@ -341,10 +365,10 @@
   </div>
 
   <div id="tabela-container">
-    <div class="loading">
-      <div class="spinner"></div>
-      <div>Carregando dados…</div>
-      <div style="font-size:11px;margin-top:6px;color:var(--text-3)">Selecione um dataset e clique em "Carregar"</div>
+    <div class="welcome-box">
+      <span style="font-size: 2.5rem; display: block; margin-bottom: 12px;">📊</span>
+      <h3>Pronto para Consulta</h3>
+      <p>Selecione o dataset desejado no menu acima, ajuste os filtros e clique no botão <strong>"Carregar"</strong> para exibir a tabela de dados.</p>
     </div>
   </div>
 </div>
@@ -524,6 +548,8 @@ function atualizarStats(data, key) {
 }
 
 function filtrarTabela() {
+  if (dadosBrutos.length === 0) return;
+
   const key = document.getElementById('filtro-dataset').value;
   const instFilter = document.getElementById('filtro-inst').value.trim().toLowerCase();
   const segFilter = document.getElementById('filtro-segmento').value;
@@ -566,6 +592,7 @@ function filtrarTabela() {
   dt = new DataTable('#tabela-dados', {
     data: filtered,
     columns: cols,
+    deferRender: true,
     pageLength: 50,
     lengthMenu: [[25, 50, 100, 250, -1], [25, 50, 100, 250, 'Todos']],
     order: [],
@@ -598,47 +625,59 @@ function carregarDados() {
     filtrarTabela();
   }
 
-  // Verificar cache
+  // Verificar cache local
   if (cacheDatasets[key]) {
     renderizar(cacheDatasets[key]);
     return;
   }
 
-  container.innerHTML = `<div class="loading"><div class="spinner"></div><div>Carregando ${dataset.label} do servidor…</div></div>`;
+  container.innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <div style="font-weight: 600; margin-bottom: 4px;">Carregando ${dataset.label}...</div>
+      <div id="loading-step" style="font-size:11px;color:var(--text-2)">Passo 1: Baixando dados em segundo plano (via Web Worker)...</div>
+    </div>
+  `;
 
-  $.get(dataset.url + '?t=' + Date.now(), function(csvText) {
-    Papa.parse(csvText, {
-      header: true,
-      dynamicTyping: false,
-      skipEmptyLines: true,
-      complete: function(results) {
-        const parsedData = results.data.filter(r => {
-          return Object.values(r).some(v => v !== null && v !== '');
-        });
+  // Cache diário inteligente baseado na data atual
+  const dateBust = new Date().toISOString().split('T')[0];
+  const urlComCache = dataset.url + '?v=' + dateBust;
 
-        if (parsedData.length === 0) {
-          container.innerHTML = '<div class="error-box">Nenhum dado encontrado. O dataset pode estar vazio ou indisponível.</div>';
-          return;
-        }
-
-        parsedData.forEach(r => {
-          if (r.cod_inst && !r.CodInst) r.CodInst = r.cod_inst;
-          if (r.nome_if && !r.NomeInstituicao) r.NomeInstituicao = r.nome_if;
-          if (r['CNPJ PARTICIPANTE'] && !r.CodInst) r.CodInst = r['CNPJ PARTICIPANTE'];
-          if (r['NOME DO PARTICIPANTE'] && !r.NomeInstituicao) r.NomeInstituicao = r['NOME DO PARTICIPANTE'];
-          if (r.cnpj && !r.CodInst) r.CodInst = r.cnpj;
-          if (r.nome_instituicao && !r.NomeInstituicao) r.NomeInstituicao = r.nome_instituicao;
-        });
-
-        cacheDatasets[key] = parsedData;
-        renderizar(parsedData);
-      },
-      error: function(err) {
-        container.innerHTML = `<div class="error-box">Erro ao processar dados: ${err}</div>`;
+  Papa.parse(urlComCache, {
+    download: true,
+    header: true,
+    dynamicTyping: false,
+    skipEmptyLines: true,
+    worker: true,
+    complete: function(results) {
+      if (document.getElementById('loading-step')) {
+        document.getElementById('loading-step').textContent = "Passo 2: Processando e mapeando registros...";
       }
-    });
-  }).fail(function(jqXHR, textStatus, err) {
-    container.innerHTML = `<div class="error-box">Erro HTTP ao carregar dataset: ${textStatus}${err ? ' — ' + err : ''}</div>`;
+
+      const parsedData = results.data.filter(r => {
+        return Object.values(r).some(v => v !== null && v !== '');
+      });
+
+      if (parsedData.length === 0) {
+        container.innerHTML = '<div class="error-box">Nenhum dado encontrado. O arquivo pode estar vazio ou corrompido.</div>';
+        return;
+      }
+
+      parsedData.forEach(r => {
+        if (r.cod_inst && !r.CodInst) r.CodInst = r.cod_inst;
+        if (r.nome_if && !r.NomeInstituicao) r.NomeInstituicao = r.nome_if;
+        if (r['CNPJ PARTICIPANTE'] && !r.CodInst) r.CodInst = r['CNPJ PARTICIPANTE'];
+        if (r['NOME DO PARTICIPANTE'] && !r.NomeInstituicao) r.NomeInstituicao = r['NOME DO PARTICIPANTE'];
+        if (r.cnpj && !r.CodInst) r.CodInst = r.cnpj;
+        if (r.nome_instituicao && !r.NomeInstituicao) r.NomeInstituicao = r.nome_instituicao;
+      });
+
+      cacheDatasets[key] = parsedData;
+      renderizar(parsedData);
+    },
+    error: function(err) {
+      container.innerHTML = `<div class="error-box">Erro no carregamento/processamento do arquivo: ${err}</div>`;
+    }
   });
 }
 
@@ -650,7 +689,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('filtro-segmento').addEventListener('change', filtrarTabela);
   document.getElementById('filtro-periodo').addEventListener('input', filtrarTabelaDebounced);
 
-  carregarDados();
+  // Removido carregamento automático inicial para evitar travamentos e poupar rede móvel
 });
 </script>
 </body>
