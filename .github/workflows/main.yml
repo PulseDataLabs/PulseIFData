@@ -37,11 +37,13 @@ jobs:
       - run: pip install -r requirements.txt
 
       - name: Configurar Wallet do Oracle Cloud
+        env:
+          WALLET_BASE64: ${{ secrets.ORACLE_DB_WALLET_BASE64 }}
         run: |
           mkdir -p ${{ github.workspace }}/wallet
-          echo "${{ secrets.ORACLE_DB_WALLET_BASE64 }}" | base64 -d > ${{ github.workspace }}/wallet.zip
+          echo "$WALLET_BASE64" | base64 -d > ${{ github.workspace }}/wallet.zip
           unzip -o ${{ github.workspace }}/wallet.zip -d ${{ github.workspace }}/wallet
-        if: "${{ secrets.ORACLE_DB_WALLET_BASE64 != '' }}"
+        if: "${{ env.WALLET_BASE64 != '' }}"
 
       - name: Extrair dados IFData
         run: python run_all.py --scraper-only --sequential
