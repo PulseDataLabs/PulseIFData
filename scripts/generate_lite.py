@@ -53,7 +53,18 @@ def gerar_lite(
         low_memory=True,
     )
 
-    log.info(f"Total lido: {len(df)} linhas")
+    # Se o lite anterior existir, mescla com ele para manter a janela deslizante de 3 anos (incremental)
+    if output_path.exists():
+        log.info(f"Mesclando com o histórico lite existente ({output_path.name}) para preservar os últimos anos...")
+        try:
+            df_old_lite = pd.read_csv(output_path, dtype=dtype)
+            # Concatenar e remover duplicados mantendo a versão mais nova (a da carga atual)
+            df = pd.concat([df_old_lite, df], ignore_index=True)
+            df = df.drop_duplicates(subset=["AnoMes", "CodInst", "TipoInstituicao"], keep="last")
+        except Exception as e:
+            log.warning(f"Não foi possível mesclar com o lite anterior: {e}")
+
+    log.info(f"Total lido/mesclado: {len(df)} linhas")
 
     df["AnoMes_int"] = df["AnoMes"].astype(str).str[:4].astype(int)
     ano_corte = df["AnoMes_int"].max() - anos + 1

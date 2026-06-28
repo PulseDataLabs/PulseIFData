@@ -68,6 +68,16 @@ class BacenIfdataScraper(BaseScraper):
 
         start_year = time_range.get("start_year", 2014)
         start_month = time_range.get("start_month", 1)
+
+        # Otimização para Actions/Agendamento: Se SCRAPE_LATEST_ONLY estiver ativo,
+        # limita a busca aos períodos do ano anterior e corrente.
+        import os
+        from datetime import date
+        if os.getenv("SCRAPE_LATEST_ONLY") == "1":
+            log.info("Modo SCRAPE_LATEST_ONLY ativo. Limitando busca ao ano anterior e corrente.")
+            start_year = date.today().year - 1
+            start_month = 1
+
         quarters = time_range.get("quarters", [3, 6, 9, 12])
         periodos = gerar_periodos(start_year, start_month, quarters)
 

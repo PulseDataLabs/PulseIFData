@@ -23,6 +23,7 @@ jobs:
       ORACLE_DB_DSN: ${{ secrets.ORACLE_DB_DSN }}
       ORACLE_DB_WALLET_DIR: ${{ github.workspace }}/wallet
       ORACLE_DB_WALLET_PASSWORD: ${{ secrets.ORACLE_DB_WALLET_PASSWORD }}
+      SCRAPE_LATEST_ONLY: "1"
 
     steps:
       - uses: actions/checkout@v6
