@@ -29,6 +29,7 @@ class BacenIfdataScraper(BaseScraper):
     phase = 1
     accumulate = False
     save_csv = False
+    compress = True
 
     title = "BACEN — IFData (todos os relatórios)"
     description = "Dados do IFData/BACEN: balanço, resultado, crédito, cadastro e capital. Coletados via API OData Olinda com paginação e checkpointing trimestral."

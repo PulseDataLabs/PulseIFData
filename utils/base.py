@@ -116,10 +116,17 @@ def read_existing_header(arquivo: Path) -> list[str]:
     if not arquivo.exists() or arquivo.stat().st_size == 0:
         return []
     try:
-        with arquivo.open("r", encoding="utf-8", newline="") as f:
-            reader = csv.reader(f)
-            header = next(reader, [])
-            return [col.strip() for col in header if col.strip()]
+        if arquivo.suffix == ".gz" or str(arquivo).endswith(".gz"):
+            import gzip
+            with gzip.open(arquivo, "rt", encoding="utf-8", newline="") as f:
+                reader = csv.reader(f)
+                header = next(reader, [])
+                return [col.strip() for col in header if col.strip()]
+        else:
+            with arquivo.open("r", encoding="utf-8", newline="") as f:
+                reader = csv.reader(f)
+                header = next(reader, [])
+                return [col.strip() for col in header if col.strip()]
     except Exception:
         return []
 
@@ -208,7 +215,12 @@ def salvar_csv(
                 substituidas = len(df_antigo) - mask_keep.sum()
                 df_antigo_filtrado = df_antigo[mask_keep]
 
-            df_final = pd.concat([df_antigo_filtrado, df_novos[cabecalho]], ignore_index=True)
+            if df_antigo_filtrado.empty:
+                df_final = df_novos[cabecalho]
+            elif df_novos[cabecalho].empty:
+                df_final = df_antigo_filtrado
+            else:
+                df_final = pd.concat([df_antigo_filtrado, df_novos[cabecalho]], ignore_index=True)
         except Exception as e:
             log.warning(f"Erro ao ler arquivo existente para acumular, reescrevendo: {e}")
             df_final = df_novos[cabecalho]

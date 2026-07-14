@@ -228,7 +228,12 @@ def normalizar(
     df_final = df_final.select(cols_presentes + cols_restantes).unique()
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    df_final.write_csv(output_path)
+    if str(output_path).endswith(".gz"):
+        import gzip
+        with gzip.open(output_path, "wb") as f:
+            df_final.write_csv(f)
+    else:
+        df_final.write_csv(output_path)
 
     log.info(
         f"Consolidado: {len(df_final)} linhas × {len(df_final.columns)} colunas"
@@ -257,7 +262,7 @@ def main():
 
     raw_dir = root_dir / "data" / "raw"
     output_rel = norm_cfg.get("output", {})
-    output_path = root_dir / output_rel.get("dir", "data/processed") / output_rel.get("filename", "ifdata_historical_10y.csv")
+    output_path = root_dir / output_rel.get("dir", "data/processed") / output_rel.get("filename", "ifdata_historical_10y.csv.gz")
 
     mapping_path = root_dir / "config" / "cosif_semantic_mapping.csv"
     mapping = _carregar_mapeamento_semantico(mapping_path)

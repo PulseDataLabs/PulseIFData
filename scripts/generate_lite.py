@@ -95,7 +95,7 @@ def gerar_lite(
 
 def main():
     root_dir = Path(__file__).resolve().parents[1]
-    full_path = root_dir / "data" / "processed" / "ifdata_historical.csv"
+    full_path = root_dir / "data" / "processed" / "ifdata_historical.csv.gz"
     output_path = root_dir / "data" / "processed" / "ifdata_historical_lite.csv"
     gerar_lite(full_path, output_path, anos=3)
 

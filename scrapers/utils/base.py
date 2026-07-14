@@ -13,6 +13,7 @@ class BaseScraper:
     accumulate: bool = True
     chaves_dedup: list[str] | None = None
     save_csv: bool = True
+    compress: bool = False
 
     title: str = ""
     description: str = ""
@@ -32,7 +33,8 @@ class BaseScraper:
             self.name = self.__class__.__name__.lower().replace("scraper", "")
         self.logger = ColorLogger(self.name)
         root_dir = Path(__file__).resolve().parents[2]
-        self.output_file = root_dir / "data" / f"{self.name}.csv"
+        ext = ".csv.gz" if getattr(self, "compress", False) else ".csv"
+        self.output_file = root_dir / "data" / f"{self.name}{ext}"
 
     def fetch(self) -> pd.DataFrame:
         raise NotImplementedError("Cada scraper deve implementar o método fetch.")

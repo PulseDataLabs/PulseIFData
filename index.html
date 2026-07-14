@@ -611,7 +611,7 @@
         <div class="step-num">04</div>
         <div class="step-body">
           <h3>Geração de métricas derivadas</h3>
-          <p>Sobre a série consolidada (<code>ifdata_historical.csv</code>): market share por IF e segmento, HHI de concentração (0–10000), rankings por ativo total e carteira, variações QoQ e YoY.</p>
+          <p>Sobre a série consolidada (<code>ifdata_historical.csv.gz</code>): market share por IF e segmento, HHI de concentração (0–10000), rankings por ativo total e carteira, variações QoQ e YoY.</p>
           <span class="tag">derivadas.py · 4 datasets gerados</span>
         </div>
       </div>
@@ -913,7 +913,7 @@ function applyStatus(st) {
 const BASE_URL = 'https://raw.githubusercontent.com/PulseDataLabs/PulseIFData/main/';
 const DS = [
   {
-    name: 'ifdata_historical.csv',
+    name: 'ifdata_historical.csv.gz',
     path: 'data/processed/ifdata_historical_lite.csv',
     desc: 'Série histórica consolidada — pivot semântico Cosif, ROE/ROA/NIM calculados',
     freq: 'Trimestral', src: 'SCR + Cosif', cat: 'balanco'
@@ -925,8 +925,8 @@ const DS = [
     freq: 'Trimestral', src: 'BACEN', cat: 'cadastro'
   },
   {
-    name: 'derivadas_market_share.csv',
-    path: 'data/derivadas_market_share.csv',
+    name: 'derivadas_market_share.csv.gz',
+    path: 'data/derivadas_market_share.csv.gz',
     desc: 'Participação de mercado por IF no ativo total do segmento (%)',
     freq: 'Trimestral', src: 'Pulse', cat: 'derivadas'
   },
@@ -937,14 +937,14 @@ const DS = [
     freq: 'Trimestral', src: 'Pulse', cat: 'derivadas'
   },
   {
-    name: 'derivadas_rankings.csv',
-    path: 'data/derivadas_rankings.csv',
+    name: 'derivadas_rankings.csv.gz',
+    path: 'data/derivadas_rankings.csv.gz',
     desc: 'Rankings trimestrais por ativo total e carteira de crédito',
     freq: 'Trimestral', src: 'Pulse', cat: 'derivadas'
   },
   {
-    name: 'derivadas_var.csv',
-    path: 'data/derivadas_var.csv',
+    name: 'derivadas_var.csv.gz',
+    path: 'data/derivadas_var.csv.gz',
     desc: 'Variações QoQ e YoY de ativo total e carteira',
     freq: 'Trimestral', src: 'Pulse', cat: 'derivadas'
   },
@@ -952,7 +952,9 @@ const DS = [
 
 function renderDs(filter) {
   const list = filter === 'todos' ? DS : DS.filter(d => d.cat === filter);
-  document.getElementById('ds-body').innerHTML = list.map(d => `
+  document.getElementById('ds-body').innerHTML = list.map(d => {
+    const ext = d.path.endsWith('.gz') ? 'CSV.GZ' : 'CSV';
+    return `
     <tr>
       <td>
         <div class="ds-name">${d.name}</div>
@@ -961,8 +963,9 @@ function renderDs(filter) {
       <td><span class="ds-desc">${d.desc}</span></td>
       <td><span class="ds-freq">${d.freq}</span></td>
       <td><span class="ds-src">${d.src}</span></td>
-      <td><a class="dl-btn" href="${BASE_URL}${d.path}" target="_blank" rel="noopener">↓ Download</a></td>
-    </tr>`).join('');
+      <td><a class="dl-btn" href="${BASE_URL}${d.path}" target="_blank" rel="noopener">↓ ${ext}</a></td>
+    </tr>`;
+  }).join('');
 }
 
 function filterDs(cat, btn) {

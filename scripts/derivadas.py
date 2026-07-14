@@ -163,7 +163,7 @@ def gerar_tudo(
 ) -> dict[str, pd.DataFrame]:
     banner("Métricas Derivadas")
 
-    input_path = data_processed_dir / "ifdata_historical.csv"
+    input_path = data_processed_dir / "ifdata_historical.csv.gz"
     if not input_path.exists():
         log.warning(f"Arquivo processado não encontrado: {input_path}")
         return {}
@@ -173,7 +173,7 @@ def gerar_tudo(
 
     resultados = {}
 
-    ms = gerar_market_share(df, output_dir / "derivadas_market_share.csv")
+    ms = gerar_market_share(df, output_dir / "derivadas_market_share.csv.gz")
     if not ms.empty:
         resultados["market_share"] = ms
 
@@ -181,11 +181,11 @@ def gerar_tudo(
     if not hhi.empty:
         resultados["hhi"] = hhi
 
-    rank = gerar_rankings(df, output_dir / "derivadas_rankings.csv")
+    rank = gerar_rankings(df, output_dir / "derivadas_rankings.csv.gz")
     if not rank.empty:
         resultados["rankings"] = rank
 
-    var = gerar_variacoes(df, output_dir / "derivadas_var.csv")
+    var = gerar_variacoes(df, output_dir / "derivadas_var.csv.gz")
     if not var.empty:
         resultados["variacoes"] = var
 

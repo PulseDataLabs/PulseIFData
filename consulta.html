@@ -401,10 +401,10 @@ const DATASETS = {
   'conglomerados': { url: BASE + 'data/bacen_conglomerados.csv', label: 'Conglomerados Financeiros' },
   'balancetes':    { url: BASE + 'data/bacen_balancetes_bancos.csv', label: 'Balancetes COSIF' },
   'basileia':      { url: BASE + 'data/bacen_parcelas_capital_basileia.csv', label: 'Parcelas de Capital' },
-  'rankings':      { url: BASE + 'data/derivadas_rankings.csv', label: 'Rankings' },
-  'market-share':  { url: BASE + 'data/derivadas_market_share.csv', label: 'Market Share' },
+  'rankings':      { url: BASE + 'data/derivadas_rankings.csv.gz', label: 'Rankings' },
+  'market-share':  { url: BASE + 'data/derivadas_market_share.csv.gz', label: 'Market Share' },
   'hhi':           { url: BASE + 'data/derivadas_hhi.csv', label: 'HHI' },
-  'var':           { url: BASE + 'data/derivadas_var.csv', label: 'Variações' },
+  'var':           { url: BASE + 'data/derivadas_var.csv.gz', label: 'Variações' },
 };
 
 let dt = null;
@@ -635,7 +635,7 @@ function carregarDados() {
     <div class="loading">
       <div class="spinner"></div>
       <div style="font-weight: 600; margin-bottom: 4px;">Carregando ${dataset.label}...</div>
-      <div id="loading-step" style="font-size:11px;color:var(--text-2)">Passo 1: Baixando dados em segundo plano (via Web Worker)...</div>
+      <div id="loading-step" style="font-size:11px;color:var(--text-2)">Passo 1: Baixando dados em segundo plano...</div>
     </div>
   `;
 
@@ -643,42 +643,72 @@ function carregarDados() {
   const dateBust = new Date().toISOString().split('T')[0];
   const urlComCache = dataset.url + '?v=' + dateBust;
 
-  Papa.parse(urlComCache, {
-    download: true,
-    header: true,
-    dynamicTyping: false,
-    skipEmptyLines: true,
-    worker: true,
-    complete: function(results) {
-      if (document.getElementById('loading-step')) {
-        document.getElementById('loading-step').textContent = "Passo 2: Processando e mapeando registros...";
-      }
-
-      const parsedData = results.data.filter(r => {
-        return Object.values(r).some(v => v !== null && v !== '');
-      });
-
-      if (parsedData.length === 0) {
-        container.innerHTML = '<div class="error-box">Nenhum dado encontrado. O arquivo pode estar vazio ou corrompido.</div>';
-        return;
-      }
-
-      parsedData.forEach(r => {
-        if (r.cod_inst && !r.CodInst) r.CodInst = r.cod_inst;
-        if (r.nome_if && !r.NomeInstituicao) r.NomeInstituicao = r.nome_if;
-        if (r['CNPJ PARTICIPANTE'] && !r.CodInst) r.CodInst = r['CNPJ PARTICIPANTE'];
-        if (r['NOME DO PARTICIPANTE'] && !r.NomeInstituicao) r.NomeInstituicao = r['NOME DO PARTICIPANTE'];
-        if (r.cnpj && !r.CodInst) r.CodInst = r.cnpj;
-        if (r.nome_instituicao && !r.NomeInstituicao) r.NomeInstituicao = r.nome_instituicao;
-      });
-
-      cacheDatasets[key] = parsedData;
-      renderizar(parsedData);
-    },
-    error: function(err) {
-      container.innerHTML = `<div class="error-box">Erro no carregamento/processamento do arquivo: ${err}</div>`;
+  function processarResultados(results) {
+    if (document.getElementById('loading-step')) {
+      document.getElementById('loading-step').textContent = "Passo 2: Processando e mapeando registros...";
     }
-  });
+
+    const parsedData = results.data.filter(r => {
+      return Object.values(r).some(v => v !== null && v !== '');
+    });
+
+    if (parsedData.length === 0) {
+      container.innerHTML = '<div class="error-box">Nenhum data encontrado. O arquivo pode estar vazio ou corrompido.</div>';
+      return;
+    }
+
+    parsedData.forEach(r => {
+      if (r.cod_inst && !r.CodInst) r.CodInst = r.cod_inst;
+      if (r.nome_if && !r.NomeInstituicao) r.NomeInstituicao = r.nome_if;
+      if (r['CNPJ PARTICIPANTE'] && !r.CodInst) r.CodInst = r['CNPJ PARTICIPANTE'];
+      if (r['NOME DO PARTICIPANTE'] && !r.NomeInstituicao) r.NomeInstituicao = r['NOME DO PARTICIPANTE'];
+      if (r.cnpj && !r.CodInst) r.CodInst = r.cnpj;
+      if (r.nome_instituicao && !r.NomeInstituicao) r.NomeInstituicao = r.nome_instituicao;
+    });
+
+    cacheDatasets[key] = parsedData;
+    renderizar(parsedData);
+  }
+
+  const isGzip = dataset.url.endsWith('.gz') || dataset.url.includes('.gz?');
+
+  if (isGzip) {
+    fetch(urlComCache)
+      .then(async response => {
+        if (!response.ok) {
+          throw new Error(`Erro HTTP: ${response.status}`);
+        }
+        let stream = response.body;
+        if (window.DecompressionStream) {
+          stream = response.body.pipeThrough(new DecompressionStream('gzip'));
+        }
+        const text = await new Response(stream).text();
+        Papa.parse(text, {
+          header: true,
+          dynamicTyping: false,
+          skipEmptyLines: true,
+          complete: processarResultados,
+          error: function(err) {
+            container.innerHTML = `<div class="error-box">Erro no parse do CSV: ${err}</div>`;
+          }
+        });
+      })
+      .catch(err => {
+        container.innerHTML = `<div class="error-box">Erro no carregamento do arquivo compactado: ${err.message}</div>`;
+      });
+  } else {
+    Papa.parse(urlComCache, {
+      download: true,
+      header: true,
+      dynamicTyping: false,
+      skipEmptyLines: true,
+      worker: true,
+      complete: processarResultados,
+      error: function(err) {
+        container.innerHTML = `<div class="error-box">Erro no carregamento/processamento do arquivo: ${err}</div>`;
+      }
+    });
+  }
 }
 
 document.addEventListener('DOMContentLoaded', function() {

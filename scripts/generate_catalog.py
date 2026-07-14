@@ -19,7 +19,7 @@ CATALOGO_BASE = [
     },
     {
         "id": "ifdata_historical_10y",
-        "name": "ifdata_historical_10y.csv",
+        "name": "ifdata_historical.csv.gz",
         "desc": "Série histórica consolidada (pivot): ativo, PL, lucro, carteira, Basileia por IF/trimestre",
         "freq": "Trimestral",
         "fonte": "BACEN",
@@ -27,7 +27,7 @@ CATALOGO_BASE = [
     },
     {
         "id": "derivadas_market_share",
-        "name": "derivadas_market_share.csv",
+        "name": "derivadas_market_share.csv.gz",
         "desc": "Participação de mercado por IF em cada trimestre (%)",
         "freq": "Trimestral",
         "fonte": "Pulse",
@@ -43,7 +43,7 @@ CATALOGO_BASE = [
     },
     {
         "id": "derivadas_rankings",
-        "name": "derivadas_rankings.csv",
+        "name": "derivadas_rankings.csv.gz",
         "desc": "Ranking das IFs por ativo total em cada trimestre",
         "freq": "Trimestral",
         "fonte": "Pulse",
@@ -51,7 +51,7 @@ CATALOGO_BASE = [
     },
     {
         "id": "derivadas_var",
-        "name": "derivadas_var.csv",
+        "name": "derivadas_var.csv.gz",
         "desc": "Variação QoQ e YoY da carteira de crédito por IF",
         "freq": "Trimestral",
         "fonte": "Pulse",

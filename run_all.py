@@ -266,7 +266,7 @@ def main(
 
             raw_dir = root_dir / "data" / "raw"
             output_rel = norm_cfg.get("output", {})
-            output_path = root_dir / output_rel.get("dir", "data/processed") / output_rel.get("filename", "ifdata_historical_10y.csv")
+            output_path = root_dir / output_rel.get("dir", "data/processed") / output_rel.get("filename", "ifdata_historical_10y.csv.gz")
 
             mapping_path = root_dir / "config" / "cosif_semantic_mapping.csv"
             mapping = {}
