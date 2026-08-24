@@ -1,43 +1,43 @@
 {
-  "timestamp": "2026-08-21T09:22:09.304755",
-  "elapsed_seconds": 4234.493877410889,
-  "status": "error",
+  "timestamp": "2026-08-24T08:30:59.034966",
+  "elapsed_seconds": 31.07591938972473,
+  "status": "success",
   "summary": {
     "total": 5,
-    "success": 4,
-    "failed": 1,
+    "success": 5,
+    "failed": 0,
     "drifts": 0
   },
   "scrapers": {
     "bacen_ifdata": {
       "status": "success",
-      "elapsed_seconds": 4234.4902629852295,
+      "elapsed_seconds": 29.693508863449097,
       "error": null,
-      "timestamp": "2026-08-21T09:22:09.304886"
+      "timestamp": "2026-08-24T08:30:59.035084"
     },
     "bacen_ifdata_cadastro": {
       "status": "success",
-      "elapsed_seconds": 23.730546951293945,
+      "elapsed_seconds": 31.073097467422485,
       "error": null,
-      "timestamp": "2026-08-21T09:22:09.304886"
+      "timestamp": "2026-08-24T08:30:59.035084"
     },
     "bacen_conglomerados": {
       "status": "success",
-      "elapsed_seconds": 1.465754508972168,
+      "elapsed_seconds": 1.7325212955474854,
       "error": null,
-      "timestamp": "2026-08-21T09:22:09.304886"
+      "timestamp": "2026-08-24T08:30:59.035084"
     },
     "bacen_balancetes_bancos": {
       "status": "success",
-      "elapsed_seconds": 7.594408750534058,
+      "elapsed_seconds": 1.6124563217163086,
       "error": null,
-      "timestamp": "2026-08-21T09:22:09.304886"
+      "timestamp": "2026-08-24T08:30:59.035084"
     },
     "bacen_parcelas_capital_basileia": {
-      "status": "error",
-      "elapsed_seconds": 2.4459285736083984,
-      "error": "Traceback (most recent call last):\n  File \"/home/runner/work/PulseIFData/PulseIFData/run_all.py\", line 92, in run_scraper\n    getattr(mod, class_name)().run()\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"/home/runner/work/PulseIFData/PulseIFData/scrapers/utils/base.py\", line 138, in run\n    raise e\n  File \"/home/runner/work/PulseIFData/PulseIFData/scrapers/utils/base.py\", line 50, in run\n    df = self.fetch()\n  File \"/home/runner/work/PulseIFData/PulseIFData/scrapers/bacen_parcelas_capital_basileia.py\", line 152, in fetch\n    raise RuntimeError(\n    ...<2 lines>...\n    )\nRuntimeError: Nenhum dado retornado da API OData do BCB (IFData). Verifique se a API está disponível.\n",
-      "timestamp": "2026-08-21T09:22:09.304886"
+      "status": "success",
+      "elapsed_seconds": 4.560666561126709,
+      "error": null,
+      "timestamp": "2026-08-24T08:30:59.035084"
     }
   },
   "drifts": {}
