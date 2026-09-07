@@ -1,43 +1,43 @@
 window.PULSEIFDATA_PIPELINE_STATUS = {
-  "timestamp": "2026-09-04T12:02:20.471106",
-  "elapsed_seconds": 32.80714535713196,
-  "status": "error",
+  "timestamp": "2026-09-07T13:30:11.384671",
+  "elapsed_seconds": 35.2528657913208,
+  "status": "success",
   "summary": {
     "total": 5,
-    "success": 4,
-    "failed": 1,
+    "success": 5,
+    "failed": 0,
     "drifts": 0
   },
   "scrapers": {
     "bacen_ifdata": {
       "status": "success",
-      "elapsed_seconds": 25.434953927993774,
+      "elapsed_seconds": 35.25032663345337,
       "error": null,
-      "timestamp": "2026-09-04T12:02:20.471229"
+      "timestamp": "2026-09-07T13:30:11.384789"
     },
     "bacen_ifdata_cadastro": {
       "status": "success",
-      "elapsed_seconds": 32.804203510284424,
+      "elapsed_seconds": 25.96982765197754,
       "error": null,
-      "timestamp": "2026-09-04T12:02:20.471229"
+      "timestamp": "2026-09-07T13:30:11.384789"
     },
     "bacen_conglomerados": {
-      "status": "error",
-      "elapsed_seconds": 0.7525131702423096,
-      "error": "Traceback (most recent call last):\n  File \"/home/runner/work/PulseIFData/PulseIFData/run_all.py\", line 92, in run_scraper\n    getattr(mod, class_name)().run()\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"/home/runner/work/PulseIFData/PulseIFData/scrapers/utils/base.py\", line 138, in run\n    raise e\n  File \"/home/runner/work/PulseIFData/PulseIFData/scrapers/utils/base.py\", line 50, in run\n    df = self.fetch()\n  File \"/home/runner/work/PulseIFData/PulseIFData/scrapers/bacen_conglomerados.py\", line 69, in fetch\n    print_warn(f\"{yyyymm}CONGLOMERADO.zip não disponível\", elapsed=time.time() - t0)\n    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: print_warn() got an unexpected keyword argument 'elapsed'\n",
-      "timestamp": "2026-09-04T12:02:20.471229"
+      "status": "success",
+      "elapsed_seconds": 1.4698896408081055,
+      "error": null,
+      "timestamp": "2026-09-07T13:30:11.384789"
     },
     "bacen_balancetes_bancos": {
       "status": "success",
-      "elapsed_seconds": 14.474614381790161,
+      "elapsed_seconds": 7.472841024398804,
       "error": null,
-      "timestamp": "2026-09-04T12:02:20.471229"
+      "timestamp": "2026-09-07T13:30:11.384789"
     },
     "bacen_parcelas_capital_basileia": {
       "status": "success",
-      "elapsed_seconds": 4.42820405960083,
+      "elapsed_seconds": 5.6255834102630615,
       "error": null,
-      "timestamp": "2026-09-04T12:02:20.471229"
+      "timestamp": "2026-09-07T13:30:11.384789"
     }
   },
   "drifts": {}
