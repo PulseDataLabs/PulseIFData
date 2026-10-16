@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-10-15T13:17:23.777315",
-  "elapsed_seconds": 28.890231370925903,
+  "timestamp": "2026-10-16T12:43:39.931474",
+  "elapsed_seconds": 32.58410978317261,
   "status": "success",
   "summary": {
     "total": 5,
@@ -11,33 +11,33 @@
   "scrapers": {
     "bacen_ifdata": {
       "status": "success",
-      "elapsed_seconds": 28.88685965538025,
+      "elapsed_seconds": 32.581175565719604,
       "error": null,
-      "timestamp": "2026-10-15T13:17:23.777440"
+      "timestamp": "2026-10-16T12:43:39.931602"
     },
     "bacen_ifdata_cadastro": {
       "status": "success",
-      "elapsed_seconds": 27.7756986618042,
+      "elapsed_seconds": 26.54940414428711,
       "error": null,
-      "timestamp": "2026-10-15T13:17:23.777440"
+      "timestamp": "2026-10-16T12:43:39.931602"
     },
     "bacen_conglomerados": {
       "status": "success",
-      "elapsed_seconds": 1.2445716857910156,
+      "elapsed_seconds": 1.4837665557861328,
       "error": null,
-      "timestamp": "2026-10-15T13:17:23.777440"
+      "timestamp": "2026-10-16T12:43:39.931602"
     },
     "bacen_balancetes_bancos": {
       "status": "success",
-      "elapsed_seconds": 7.394302606582642,
+      "elapsed_seconds": 7.674941062927246,
       "error": null,
-      "timestamp": "2026-10-15T13:17:23.777440"
+      "timestamp": "2026-10-16T12:43:39.931602"
     },
     "bacen_parcelas_capital_basileia": {
       "status": "success",
-      "elapsed_seconds": 5.798870086669922,
+      "elapsed_seconds": 4.895386457443237,
       "error": null,
-      "timestamp": "2026-10-15T13:17:23.777440"
+      "timestamp": "2026-10-16T12:43:39.931602"
     }
   },
   "drifts": {}
