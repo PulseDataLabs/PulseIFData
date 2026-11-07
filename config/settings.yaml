@@ -8,6 +8,7 @@ odata:
 extraction:
   pagination:
     top: 5000
+    cadastro_top: 100
     max_retries: 3
     retry_delay: 5
   rate_limit: 1.0

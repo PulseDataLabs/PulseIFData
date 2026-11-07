@@ -128,7 +128,8 @@ Série histórica desde **2014** (10+ anos), atualização trimestral.
 
 ### Limitações conhecidas
 
-- **IfDataCadastro** (endpoint de cadastro de IFs) retorna HTTP 500 para todos os períodos testados. O pipeline usa fallback extraindo CodInst dos dados financeiros + mapeamento manual das maiores IFs.
+- **IfDataCadastro** exige paginação compatível com o limite documentado no Swagger (`$top=100`). O pipeline consulta as últimas datas-base disponíveis e usa fallback extraindo CodInst dos dados financeiros quando a API não responder.
+- Para reconstruir todos os checkpoints históricos do cadastro, execute `REFRESH_CADASTRO=1 python run_all.py --scraper-only --sequential`. A variável remove apenas os checkpoints `ifdata_cadastro_*.parquet`; os demais dados não são alterados.
 - **Relatórios de crédito** (7–13) retornam vazios para tipo 1 (conglomerados prudenciais).
 - **COSIF** sofreu quebra de série em março/2025 — `config/cosif_de_para.csv` mantém as equivalências.
 
