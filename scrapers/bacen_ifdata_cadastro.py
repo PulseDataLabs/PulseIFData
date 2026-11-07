@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 from pathlib import Path
@@ -73,22 +74,33 @@ class BacenIfdataCadastroScraper(BaseScraper):
         base_url = odata["base_url"].rstrip("/")
         cadastro_endpoint = odata["endpoints"]["cadastro"]
         time_range = extr.get("time_range", {})
-        top = extr.get("pagination", {}).get("top", 5000)
+        # O Swagger atual documenta `$top=100` para este recurso. Valores
+        # maiores podem fazer o endpoint retornar HTTP 500.
+        top = extr.get("pagination", {}).get("cadastro_top", 100)
         max_retries = extr.get("pagination", {}).get("max_retries", 3)
         retry_delay = extr.get("pagination", {}).get("retry_delay", 5)
         start_year = time_range.get("start_year", 2014)
         quarters = time_range.get("quarters", [3, 6, 9, 12])
-        periodos = gerar_periodos(start_year, quarters[0], quarters, end_year=start_year + 1)[:4]
-        periodos = [p for p in periodos if p >= 202400]
+        # `gerar_periodos` já ordena do mais recente para o mais antigo.
+        # Mantemos todos os períodos para reconstruir o histórico do cadastro.
+        periodos = gerar_periodos(start_year, quarters[0], quarters)
+        force_refresh = os.getenv("REFRESH_CADASTRO") == "1"
 
         section("Cadastro IFData — OData + REST + Fallback")
+        log.info(
+            f"Importando {len(periodos)} períodos de cadastro"
+            f"{' (reprocessamento forçado)' if force_refresh else ''}"
+        )
 
         frames_cadastro = []
         cadastro_ok = False
 
         for periodo in periodos:
-            raw_filename = f"ifdata_cadastro_{periodo}.csv"
+            raw_filename = f"ifdata_cadastro_{periodo}.parquet"
             raw_path = self.raw_dir / raw_filename
+            if force_refresh and raw_path.exists():
+                raw_path.unlink()
+                log.info(f"Checkpoint de cadastro removido: {raw_filename}")
             url = f"{base_url}/{cadastro_endpoint}"
             params = {"@AnoMes": str(periodo), "$format": "json"}
 
@@ -99,6 +111,16 @@ class BacenIfdataCadastroScraper(BaseScraper):
             )
 
             if df is not None and not df.empty:
+                # A versão atual da API usa nomes distintos dos adotados
+                # historicamente pelo pipeline.
+                df.rename(
+                    columns={
+                        "SegmentoTb": "Segmento",
+                        "Uf": "UF",
+                        "Municipio": "Cidade",
+                    },
+                    inplace=True,
+                )
                 df["AnoMes"] = str(periodo)
                 frames_cadastro.append(df)
                 elapsed = time.time() - t0
@@ -109,7 +131,7 @@ class BacenIfdataCadastroScraper(BaseScraper):
 
         if frames_cadastro:
             df_cadastro = pd.concat(frames_cadastro, ignore_index=True).drop_duplicates(
-                subset=["CodInst"], keep="last"
+                subset=["CodInst"], keep="first"
             )
             log.info(f"Cadastro OData consolidado: {len(df_cadastro)} IFs únicas")
             return df_cadastro
