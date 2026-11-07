@@ -1,6 +1,8 @@
 import os
 import sys
 import time
+from calendar import monthrange
+from datetime import date, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -18,6 +20,21 @@ from utils.base import nova_session, get_logger
 from scripts.utils.ux import print_done, print_warn, print_skip, section
 
 log = get_logger("bacen_ifdata_cadastro")
+
+
+def _periodos_publicados(periodos: list[int], hoje: date | None = None) -> list[int]:
+    """Retorna apenas datas-base que já passaram do prazo de publicação do BCB."""
+    hoje = hoje or date.today()
+    publicados = []
+    for periodo in periodos:
+        ano, mes = divmod(periodo, 100)
+        if mes not in (3, 6, 9, 12):
+            continue
+        ultimo_dia = date(ano, mes, monthrange(ano, mes)[1])
+        prazo_dias = 90 if mes == 12 else 60
+        if ultimo_dia + timedelta(days=prazo_dias) <= hoje:
+            publicados.append(periodo)
+    return publicados
 
 
 def _carregar_settings() -> dict:
@@ -83,7 +100,8 @@ class BacenIfdataCadastroScraper(BaseScraper):
         quarters = time_range.get("quarters", [3, 6, 9, 12])
         # `gerar_periodos` já ordena do mais recente para o mais antigo.
         # Mantemos todos os períodos para reconstruir o histórico do cadastro.
-        periodos = gerar_periodos(start_year, quarters[0], quarters)
+        periodos_disponiveis = gerar_periodos(start_year, quarters[0], quarters)
+        periodos = _periodos_publicados(periodos_disponiveis)
         force_refresh = os.getenv("REFRESH_CADASTRO") == "1"
 
         section("Cadastro IFData — OData + REST + Fallback")
@@ -91,6 +109,9 @@ class BacenIfdataCadastroScraper(BaseScraper):
             f"Importando {len(periodos)} períodos de cadastro"
             f"{' (reprocessamento forçado)' if force_refresh else ''}"
         )
+        ignorados = sorted(set(periodos_disponiveis) - set(periodos), reverse=True)
+        if ignorados:
+            log.info(f"Períodos ainda não publicados ignorados: {ignorados}")
 
         frames_cadastro = []
         cadastro_ok = False
@@ -127,7 +148,7 @@ class BacenIfdataCadastroScraper(BaseScraper):
                 print_done(f"Cadastro OData {periodo}: {len(df)} IFs", elapsed=elapsed)
                 cadastro_ok = True
             else:
-                print_warn(f"Cadastro OData {periodo}: sem dados (HTTP 500)")
+                print_warn(f"Cadastro OData {periodo}: sem dados ou API indisponível")
 
         if frames_cadastro:
             df_cadastro = pd.concat(frames_cadastro, ignore_index=True).drop_duplicates(
