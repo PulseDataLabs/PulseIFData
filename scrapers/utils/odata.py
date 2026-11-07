@@ -16,7 +16,7 @@ ODATA_HEADERS = {
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/120.0.0.0 Safari/537.36"
     ),
-    "Accept": "application/json, text/csv, */*",
+    "Accept": "application/json;odata.metadata=minimal",
 }
 
 
@@ -46,14 +46,16 @@ def paginar_odata(
     top: int = 5000,
     max_retries: int = 3,
     retry_delay: int = 5,
+    primeira_pagina_sem_paginacao: bool = False,
 ) -> pd.DataFrame:
     todos_registros = []
     skip = 0
 
     while True:
         params_pag = dict(params)
-        params_pag["$top"] = top
-        params_pag["$skip"] = skip
+        if not (primeira_pagina_sem_paginacao and skip == 0):
+            params_pag["$top"] = top
+            params_pag["$skip"] = skip
 
         for tentativa in range(1, max_retries + 1):
             try:
@@ -106,6 +108,7 @@ def baixar_com_checkpoint(
     top: int = 5000,
     max_retries: int = 3,
     retry_delay: int = 5,
+    primeira_pagina_sem_paginacao: bool = False,
 ) -> pd.DataFrame | None:
     if raw_path.suffix == ".csv":
         raw_path = raw_path.with_suffix(".parquet")
@@ -122,6 +125,7 @@ def baixar_com_checkpoint(
     df = paginar_odata(
         session, url, params,
         top=top, max_retries=max_retries, retry_delay=retry_delay,
+        primeira_pagina_sem_paginacao=primeira_pagina_sem_paginacao,
     )
 
     if df.empty:

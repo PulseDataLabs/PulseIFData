@@ -129,6 +129,7 @@ class BacenIfdataCadastroScraper(BaseScraper):
             df = baixar_com_checkpoint(
                 session, url, params, raw_path,
                 top=top, max_retries=max_retries, retry_delay=retry_delay,
+                primeira_pagina_sem_paginacao=True,
             )
 
             if df is not None and not df.empty:
