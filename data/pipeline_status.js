@@ -43,7 +43,7 @@ window.PULSEIFDATA_PIPELINE_STATUS = {
   "drifts": {},
   "data_quality": {
     "status": "warning",
-    "timestamp": "2026-11-08T17:38:00.239064",
+    "timestamp": "2026-11-08T17:50:50.564405",
     "total_datasets": 17,
     "passed": 5,
     "warnings": 12,

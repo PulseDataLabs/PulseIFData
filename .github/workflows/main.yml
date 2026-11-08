@@ -70,9 +70,10 @@ jobs:
           python scripts/enriquecer_cadastro.py
           python run_all.py --normalize-only
 
-      - name: Métricas derivadas, catálogo e validação
+      - name: Métricas derivadas, dimensões, catálogo e validação
         run: |
           python run_all.py --derivadas-only
+          python run_all.py --dimensoes-only
           python run_all.py --generate-catalog
           python scripts/validar_datasets.py --fail-on-error
 

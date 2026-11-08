@@ -174,5 +174,21 @@
     "freq": "Trimestral",
     "fonte": "Pulse",
     "cat": "derivadas"
+  },
+  {
+    "id": "dim_conta",
+    "name": "dim_conta.csv",
+    "desc": "Dicionário mestre de contas contábeis dos 16 relatórios IFData com vigência temporal",
+    "freq": "Trimestral",
+    "fonte": "Pulse",
+    "cat": "cadastro"
+  },
+  {
+    "id": "depara_conglomerados",
+    "name": "depara_conglomerados.csv",
+    "desc": "Equivalência De-Para entre Conglomerados Financeiros (Tipo 2) e Prudenciais (Tipo 1) para séries contínuas 2014–2026+",
+    "freq": "Trimestral",
+    "fonte": "Pulse",
+    "cat": "cadastro"
   }
 ]

@@ -314,6 +314,16 @@ def main(
             logger.error(red(f"  ✖  Erro nas métricas derivadas: {e}"))
             pipeline_ok = False
 
+    if not scraper_only and not normalize_only:
+        _section("Tabelas Dimensionais", "📐")
+        try:
+            from scripts.gerar_dimensoes import gerar_todas_dimensoes
+            data_dir = root_dir / "data"
+            gerar_todas_dimensoes(data_dir)
+        except Exception as e:
+            logger.error(red(f"  ✖  Erro ao gerar tabelas dimensionais: {e}"))
+            pipeline_ok = False
+
     _section("Catálogo", "📦")
     try:
         from scripts.generate_catalog import generate
@@ -366,6 +376,7 @@ if __name__ == "__main__":
     parser.add_argument("--scraper-only", action="store_true", help="Apenas extração")
     parser.add_argument("--normalize-only", action="store_true", help="Apenas normalização")
     parser.add_argument("--derivadas-only", action="store_true", help="Apenas métricas derivadas")
+    parser.add_argument("--dimensoes-only", action="store_true", help="Apenas tabelas dimensionais (dim_conta e depara_conglomerados)")
     parser.add_argument("--sequential", action="store_true", help="Execução sequencial")
     parser.add_argument("--generate-catalog", action="store_true", help="Regenera datasets.json e sai")
     parser.add_argument("--validate-only", action="store_true", help="Executa auditoria de qualidade de dados e sai")
@@ -376,6 +387,12 @@ if __name__ == "__main__":
     if args.skip_db:
         import os
         os.environ["SKIP_ORACLE_DB"] = "1"
+
+    if args.dimensoes_only:
+        _banner()
+        from scripts.gerar_dimensoes import gerar_todas_dimensoes
+        gerar_todas_dimensoes()
+        sys.exit(0)
 
     if args.validate_only:
         _banner()
