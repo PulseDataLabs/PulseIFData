@@ -322,6 +322,17 @@ def main(
         logger.error(red(f"  ✖  Erro ao gerar catálogo: {e}"))
         pipeline_ok = False
 
+    _section("Validação de Qualidade de Dados", "🛡️")
+    try:
+        from scripts.validar_datasets import validar_todos_datasets
+        res_val = validar_todos_datasets(atualizar_status=True)
+        if res_val.get("status") == "error":
+            logger.error(red("  ✖  Falhas críticas detectadas na auditoria de qualidade de dados."))
+            pipeline_ok = False
+    except Exception as e:
+        logger.error(red(f"  ✖  Erro na auditoria de qualidade de dados: {e}"))
+        pipeline_ok = False
+
     # Carga de CSVs de metadados e tabelas auxiliares para o banco Oracle
     if not scraper_only and not os.getenv("SKIP_ORACLE_DB"):
         try:
@@ -357,6 +368,7 @@ if __name__ == "__main__":
     parser.add_argument("--derivadas-only", action="store_true", help="Apenas métricas derivadas")
     parser.add_argument("--sequential", action="store_true", help="Execução sequencial")
     parser.add_argument("--generate-catalog", action="store_true", help="Regenera datasets.json e sai")
+    parser.add_argument("--validate-only", action="store_true", help="Executa auditoria de qualidade de dados e sai")
     parser.add_argument("--skip-db", action="store_true", help="Pula a carga de dados no Oracle DB")
 
     args = parser.parse_args()
@@ -364,6 +376,12 @@ if __name__ == "__main__":
     if args.skip_db:
         import os
         os.environ["SKIP_ORACLE_DB"] = "1"
+
+    if args.validate_only:
+        _banner()
+        from scripts.validar_datasets import validar_todos_datasets
+        res = validar_todos_datasets(atualizar_status=True)
+        sys.exit(0 if res.get("status") != "error" else 1)
 
     if args.generate_catalog:
         _banner()

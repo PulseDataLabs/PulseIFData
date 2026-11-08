@@ -31,7 +31,7 @@ def gerar_periodos(
     periodos = []
     for ano in range(start_year, limite + 1):
         for q in quarters:
-            if ano == limite and q > hoje.month:
+            if ano == hoje.year and q > hoje.month:
                 break
             if ano == start_year and q < start_month:
                 continue
@@ -94,7 +94,7 @@ def paginar_odata(
             break
 
         todos_registros.append(df_page)
-        if not primeira_pagina and len(df_page) < top:
+        if len(df_page) < top:
             break
 
         skip += len(df_page)

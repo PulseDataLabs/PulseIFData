@@ -40,5 +40,13 @@
       "timestamp": "2026-11-06T15:14:27.314230"
     }
   },
-  "drifts": {}
+  "drifts": {},
+  "data_quality": {
+    "status": "warning",
+    "timestamp": "2026-11-08T17:38:00.239064",
+    "total_datasets": 17,
+    "passed": 5,
+    "warnings": 12,
+    "failed": 0
+  }
 }
