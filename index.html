@@ -560,6 +560,10 @@
     <h2 class="section-title">16 relatórios IFData cobertos</h2>
     <p class="section-sub">Todos os 16 relatórios oficiais da API Olinda/BACEN consolidados em datasets dedicados (<code>.csv.gz</code>), cobrindo conglomerados prudenciais, conglomerados financeiros e instituições individuais desde 2014.</p>
 
+    <div class="warning-note" style="margin-bottom:1rem;padding:.75rem 1rem;border:1px solid rgba(210,153,34,.3);background:var(--warn-bg);border-radius:8px;color:var(--warn);font-size:13px;">
+      ⚠️ <strong>Cobertura depende da fonte:</strong> o BACEN publica cada relatório apenas para certos tipos de instituição. Relatórios 1–4: tipos 1, 2 e 3; Capital (5): tipo 2 até 2014 e tipo 1 depois; Crédito (7, 9–14): tipo 2 (conglomerado financeiro) até 202412 e tipo 1 (prudencial) a partir de 202503; Câmbio (15): tipo 4. Nos relatórios de crédito e capital, a troca de tipo afeta a comparabilidade entre antes e depois da transição — filtre por <code>TipoInstituicao</code>.
+    </div>
+
     <div class="relatorios-grid">
       <div class="rel-card"><span class="rel-num">01</span><div class="rel-body"><h4>Resumo</h4><span>Balanço · 2014–hoje</span></div></div>
       <div class="rel-card"><span class="rel-num">02</span><div class="rel-body"><h4>Ativo</h4><span>Balanço · 2014–hoje</span></div></div>
@@ -568,15 +572,15 @@
       <div class="rel-card"><span class="rel-num">05</span><div class="rel-body"><h4>Informações de Capital</h4><span>Balanço · 2014–hoje</span></div></div>
       <div class="rel-card"><span class="rel-num">06</span><div class="rel-body"><h4>Segmentação</h4><span>Cadastro · 2017–hoje</span></div></div>
       <div class="rel-card"><span class="rel-num">07</span><div class="rel-body"><h4>Crédito por Indexador</h4><span>Crédito (SCR) · 2014–hoje</span></div></div>
-      <div class="rel-card"><span class="rel-num">08</span><div class="rel-body"><h4>Crédito por Nível de Risco</h4><span>Crédito (SCR) · 2014–2024</span></div></div>
+      <div class="rel-card"><span class="rel-num">08</span><div class="rel-body"><h4>Crédito por Nível de Risco</h4><span>Crédito (SCR) · 2014–2024 · encerrado, substituído pelo Rel. 16</span></div></div>
       <div class="rel-card"><span class="rel-num">09</span><div class="rel-body"><h4>Crédito por Região Geográfica</h4><span>Crédito (SCR) · 2014–hoje</span></div></div>
       <div class="rel-card"><span class="rel-num">10</span><div class="rel-body"><h4>Crédito: Clientes e Operações</h4><span>Crédito (SCR) · 2014–hoje</span></div></div>
       <div class="rel-card"><span class="rel-num">11</span><div class="rel-body"><h4>Crédito PF — Modalidade e Prazo</h4><span>Crédito (SCR) · 2014–hoje</span></div></div>
       <div class="rel-card"><span class="rel-num">12</span><div class="rel-body"><h4>Crédito PJ — Atividade (CNAE)</h4><span>Crédito (SCR) · 2014–hoje</span></div></div>
       <div class="rel-card"><span class="rel-num">13</span><div class="rel-body"><h4>Crédito PJ — Modalidade e Prazo</h4><span>Crédito (SCR) · 2014–hoje</span></div></div>
       <div class="rel-card"><span class="rel-num">14</span><div class="rel-body"><h4>Crédito PJ — Porte do Tomador</h4><span>Crédito (SCR) · 2014–hoje</span></div></div>
-      <div class="rel-card"><span class="rel-num">15</span><div class="rel-body"><h4>Movimentação de Câmbio</h4><span>Câmbio · 2014–2023</span></div></div>
-      <div class="rel-card"><span class="rel-num">16</span><div class="rel-body"><h4>Instrumentos Financeiros</h4><span>Crédito (Res. 4.966) · 2025–hoje</span></div></div>
+      <div class="rel-card"><span class="rel-num">15</span><div class="rel-body"><h4>Movimentação de Câmbio</h4><span>Câmbio · 2014–2023 · fonte sem dados após 202306</span></div></div>
+      <div class="rel-card"><span class="rel-num">16</span><div class="rel-body"><h4>Instrumentos Financeiros</h4><span>Crédito (Res. 4.966) · 2025–hoje · sucede o Rel. 8</span></div></div>
     </div>
   </div>
 </section>

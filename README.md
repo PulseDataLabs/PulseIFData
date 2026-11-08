@@ -147,6 +147,20 @@ flowchart TD
 
 Série histórica desde **2014** (50+ trimestres), atualização trimestral.
 
+> **Cobertura depende da fonte.** O BACEN publica cada relatório apenas para certos tipos de instituição (sondagem da API em 19 períodos, todos os tipos 1–4):
+>
+> | Relatórios | Tipo(s) com dados |
+> |---|---|
+> | 1–4 | 1, 2 e 3 (série completa) |
+> | 5 Capital | 2 até 201412; 1 a partir de 201503 |
+> | 6 Segmentação | 1 (a partir de 201703) |
+> | 7, 9–14 Crédito | 2 até 202412; 1 a partir de 202503 |
+> | 8 Nível de Risco | 2, até 202412 (substituído pelo Rel. 16) |
+> | 15 Câmbio | 4, até 202306 (sem dados depois) |
+> | 16 Instrumentos Financeiros | 1, a partir de 202503 |
+>
+> Nos relatórios de crédito e capital, a troca de tipo (conglomerado financeiro → prudencial) afeta a comparabilidade entre antes e depois da transição; filtre por `TipoInstituicao` nas análises.
+
 ### Datasets gerados (22 datasets principais)
 
 | Dataset | Descrição | Tamanho aprox. | Categoria |
