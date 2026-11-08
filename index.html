@@ -483,12 +483,13 @@
     <h1>Pulse<span class="accent">IFData</span></h1>
     <p class="hero-tagline">// Inteligência do Sistema Financeiro Nacional</p>
     <p class="hero-sub">
-      11 relatórios do IFData/BACEN coletados, normalizados e enriquecidos via pipeline serverless —
+      Os 16 relatórios oficiais do IFData/BACEN e o cadastro histórico de IFs coletados, normalizados e enriquecidos via pipeline serverless —
       série histórica consolidada desde 2014, métricas derivadas e schema consistente,
       prontos para consumo em CSV, Python ou BI.
     </p>
     <div class="hero-actions">
       <a href="#datasets" class="btn-primary">Explorar datasets</a>
+      <a href="consulta.html" class="btn-outline">Consultar dados</a>
       <a href="https://github.com/PulseDataLabs/PulseIFData" class="btn-outline" target="_blank" rel="noopener">Ver no GitHub</a>
       <a href="https://github.com/PulseDataLabs/PulseIFData/issues" class="btn-outline" target="_blank" rel="noopener">Sugerir dataset</a>
     </div>
@@ -498,9 +499,9 @@
 <!-- Stats -->
 <div class="stats">
   <div class="stats-inner">
-    <div class="stat"><span class="stat-val">11</span><span class="stat-lbl">Relatórios IFData</span></div>
+    <div class="stat"><span class="stat-val">16</span><span class="stat-lbl">Relatórios IFData</span></div>
     <div class="stat"><span class="stat-val">2014</span><span class="stat-lbl">Início da série histórica</span></div>
-    <div class="stat"><span class="stat-val">Trimestral</span><span class="stat-lbl">Frequência de atualização</span></div>
+    <div class="stat"><span class="stat-val">22</span><span class="stat-lbl">Datasets publicados</span></div>
     <div class="stat"><span class="stat-val">SCR + Cosif</span><span class="stat-lbl">Bases BACEN cobertas</span></div>
   </div>
 </div>
@@ -510,18 +511,18 @@
   <div class="section-inner">
     <div class="eyebrow">Sobre</div>
     <h2 class="section-title">Por que PulseIFData?</h2>
-    <p class="section-sub">O IFData do BACEN é público, mas difícil de consumir. Sem série histórica consolidada, paginação manual, quebras de série e endpoints instáveis. O PulseIFData resolve isso.</p>
+    <p class="section-sub">O IFData do BACEN é público, mas difícil de consumir. Sem série histórica consolidada, paginação manual, quebras de série e peculiaridades na API OData. O PulseIFData resolve isso.</p>
 
     <div class="sobre-grid">
       <div class="sobre-card">
         <span class="sc-emoji">📦</span>
-        <h3>Série histórica consolidada (10+ anos)</h3>
-        <p>Dados desde 2014 em um único CSV. Sem iterar trimestre × relatório × tipo de IF na API OData do BACEN.</p>
+        <h3>Todos os 16 relatórios + série consolidada (10+ anos)</h3>
+        <p>Série histórica completa desde 2014 tanto em tabela pivotada pronta para análise quanto nos 16 datasets individuais de cada relatório do IFData.</p>
       </div>
       <div class="sobre-card">
         <span class="sc-emoji">🔄</span>
         <h3>Schema normalizado com pivot semântico</h3>
-        <p>35 contas COSIF mapeadas semanticamente em colunas legíveis. UTF-8, decimal ponto, datas YYYY-MM-DD.</p>
+        <p>56 contas COSIF (pré e pós-2025) mapeadas semanticamente em colunas legíveis via Polars. UTF-8, decimal ponto, datas YYYY-MM-DD.</p>
       </div>
       <div class="sobre-card">
         <span class="sc-emoji">📊</span>
@@ -529,24 +530,24 @@
         <p>HHI de concentração, participação de mercado por IF, rankings e variações QoQ/YoY — calculadas automaticamente sobre a série consolidada.</p>
       </div>
       <div class="sobre-card">
-        <span class="sc-emoji">🔗</span>
-        <h3>Integrável com o portfólio Pulse</h3>
-        <p>Cruzamento nativo com <a href="https://pulsedatalabs.github.io/PulseFlat/">PulseFlat</a> (SELIC, CDI) para análises como NIM ajustado ao ciclo de juros.</p>
+        <span class="sc-emoji">🏛️</span>
+        <h3>Cadastro histórico completo de IFs</h3>
+        <p>Mais de 265 mil registros trimestrais (6.200+ IFs desde 2014) coletados via paginação adaptativa no endpoint <code>IfDataCadastro</code> com segmento S1–S5, UF, município e conglomerado.</p>
       </div>
       <div class="sobre-card">
         <span class="sc-emoji">💾</span>
         <h3>Persistência em Banco de Dados Relacional</h3>
-        <p>Integração nativa com <strong>Oracle Cloud Autonomous Database</strong> (via SQLAlchemy e oracledb Thin). Dados de histórico e tabelas auxiliares persistidos em tabelas prontas para consultas SQL robustas.</p>
+        <p>Integração nativa com <strong>Oracle Cloud Autonomous Database</strong> (via SQLAlchemy e oracledb Thin). Dados de histórico, relatórios e tabelas auxiliares persistidos para consultas SQL robustas.</p>
       </div>
-      <div class="sobre-card warn-card">
-        <span class="sc-emoji">⚠️</span>
-        <h3>Limitação: endpoint de cadastro instável</h3>
-        <p><code>IfDataCadastro</code> retorna HTTP 500 para todos os períodos. O pipeline usa fallback via <code>CodInst</code> extraído dos dados financeiros + mapeamento manual das maiores IFs.</p>
+      <div class="sobre-card">
+        <span class="sc-emoji">🔗</span>
+        <h3>Integrável com o portfólio Pulse</h3>
+        <p>Cruzamento nativo com <a href="https://pulsedatalabs.github.io/PulseFlat/">PulseFlat</a> (SELIC, CDI) para análises como NIM ajustado ao ciclo de juros.</p>
       </div>
       <div class="sobre-card warn-card">
         <span class="sc-emoji">🔀</span>
-        <h3>Quebra de série COSIF (mar/2025)</h3>
-        <p>O BACEN alterou o plano COSIF em março/2025. O pipeline mantém equivalências em <code>cosif_de_para.csv</code> para preservar comparabilidade histórica.</p>
+        <h3>Transição COSIF / Resolução CMN 4.966 (mar/2025)</h3>
+        <p>O BACEN atualizou os códigos de conta (<code>1401xx</code>/<code>1402xx</code>/<code>1418xx</code>) e substituiu o Relatório 8 pelo Relatório 16 em mar/2025. O pipeline mapeia ambos os períodos em <code>cosif_semantic_mapping.csv</code>.</p>
       </div>
     </div>
   </div>
@@ -556,21 +557,26 @@
 <section id="relatorios">
   <div class="section-inner">
     <div class="eyebrow">Relatórios</div>
-    <h2 class="section-title">11 relatórios IFData cobertos</h2>
-    <p class="section-sub">Coletados para 3 tipos de instituição (conglomerado prudencial, conglomerado financeiro, IF individual). Relatórios de crédito retornam dados apenas para tipos 2 e 3.</p>
+    <h2 class="section-title">16 relatórios IFData cobertos</h2>
+    <p class="section-sub">Todos os 16 relatórios oficiais da API Olinda/BACEN consolidados em datasets dedicados (<code>.csv.gz</code>), cobrindo conglomerados prudenciais, conglomerados financeiros e instituições individuais desde 2014.</p>
 
     <div class="relatorios-grid">
-      <div class="rel-card"><span class="rel-num">01</span><div class="rel-body"><h4>Resumo</h4><span>Balanço</span></div></div>
-      <div class="rel-card"><span class="rel-num">02</span><div class="rel-body"><h4>Ativo</h4><span>Balanço</span></div></div>
-      <div class="rel-card"><span class="rel-num">03</span><div class="rel-body"><h4>Passivo</h4><span>Balanço</span></div></div>
-      <div class="rel-card"><span class="rel-num">04</span><div class="rel-body"><h4>Demonstração de Resultado</h4><span>Balanço</span></div></div>
-      <div class="rel-card"><span class="rel-num">05</span><div class="rel-body"><h4>Informações de Capital</h4><span>Balanço</span></div></div>
-      <div class="rel-card"><span class="rel-num">06</span><div class="rel-body"><h4>Segmentação</h4><span>Cadastro</span></div></div>
-      <div class="rel-card"><span class="rel-num">07</span><div class="rel-body"><h4>Crédito por Indexador</h4><span>Crédito (SCR)</span></div></div>
-      <div class="rel-card"><span class="rel-num">08</span><div class="rel-body"><h4>Crédito por Nível de Risco</h4><span>Crédito (SCR)</span></div></div>
-      <div class="rel-card"><span class="rel-num">09</span><div class="rel-body"><h4>Crédito por Região Geográfica</h4><span>Crédito (SCR)</span></div></div>
-      <div class="rel-card"><span class="rel-num">11</span><div class="rel-body"><h4>Crédito PF — Modalidade e Prazo</h4><span>Crédito (SCR)</span></div></div>
-      <div class="rel-card"><span class="rel-num">13</span><div class="rel-body"><h4>Crédito PJ — Modalidade e Prazo</h4><span>Crédito (SCR)</span></div></div>
+      <div class="rel-card"><span class="rel-num">01</span><div class="rel-body"><h4>Resumo</h4><span>Balanço · 2014–hoje</span></div></div>
+      <div class="rel-card"><span class="rel-num">02</span><div class="rel-body"><h4>Ativo</h4><span>Balanço · 2014–hoje</span></div></div>
+      <div class="rel-card"><span class="rel-num">03</span><div class="rel-body"><h4>Passivo</h4><span>Balanço · 2014–hoje</span></div></div>
+      <div class="rel-card"><span class="rel-num">04</span><div class="rel-body"><h4>Demonstração de Resultado</h4><span>Balanço · 2014–hoje</span></div></div>
+      <div class="rel-card"><span class="rel-num">05</span><div class="rel-body"><h4>Informações de Capital</h4><span>Balanço · 2014–hoje</span></div></div>
+      <div class="rel-card"><span class="rel-num">06</span><div class="rel-body"><h4>Segmentação</h4><span>Cadastro · 2017–hoje</span></div></div>
+      <div class="rel-card"><span class="rel-num">07</span><div class="rel-body"><h4>Crédito por Indexador</h4><span>Crédito (SCR) · 2014–hoje</span></div></div>
+      <div class="rel-card"><span class="rel-num">08</span><div class="rel-body"><h4>Crédito por Nível de Risco</h4><span>Crédito (SCR) · 2014–2024</span></div></div>
+      <div class="rel-card"><span class="rel-num">09</span><div class="rel-body"><h4>Crédito por Região Geográfica</h4><span>Crédito (SCR) · 2014–hoje</span></div></div>
+      <div class="rel-card"><span class="rel-num">10</span><div class="rel-body"><h4>Crédito: Clientes e Operações</h4><span>Crédito (SCR) · 2014–hoje</span></div></div>
+      <div class="rel-card"><span class="rel-num">11</span><div class="rel-body"><h4>Crédito PF — Modalidade e Prazo</h4><span>Crédito (SCR) · 2014–hoje</span></div></div>
+      <div class="rel-card"><span class="rel-num">12</span><div class="rel-body"><h4>Crédito PJ — Atividade (CNAE)</h4><span>Crédito (SCR) · 2014–hoje</span></div></div>
+      <div class="rel-card"><span class="rel-num">13</span><div class="rel-body"><h4>Crédito PJ — Modalidade e Prazo</h4><span>Crédito (SCR) · 2014–hoje</span></div></div>
+      <div class="rel-card"><span class="rel-num">14</span><div class="rel-body"><h4>Crédito PJ — Porte do Tomador</h4><span>Crédito (SCR) · 2014–hoje</span></div></div>
+      <div class="rel-card"><span class="rel-num">15</span><div class="rel-body"><h4>Movimentação de Câmbio</h4><span>Câmbio · 2014–2023</span></div></div>
+      <div class="rel-card"><span class="rel-num">16</span><div class="rel-body"><h4>Instrumentos Financeiros</h4><span>Crédito (Res. 4.966) · 2025–hoje</span></div></div>
     </div>
   </div>
 </section>
@@ -580,31 +586,31 @@
   <div class="section-inner">
     <div class="eyebrow">Pipeline</div>
     <h2 class="section-title">Como funciona</h2>
-    <p class="section-sub">Pipeline serverless com orquestração paralela via <code>ThreadPoolExecutor</code>. Checkpointing incremental evita re-coleta de trimestres já processados.</p>
+    <p class="section-sub">Pipeline serverless com orquestração paralela e consolidação via Polars. Checkpointing incremental evita re-coleta de trimestres já processados.</p>
 
     <div class="pipeline-list">
       <div class="pipeline-step">
         <div class="step-num">01</div>
         <div class="step-body">
           <h3>Detecção e disparo</h3>
-          <p>GitHub Actions com cron trimestral monitora novo período disponível no endpoint OData do BACEN (<code>olinda.bcb.gov.br/ifdata/v1</code>). Pode ser disparado manualmente pelo orquestrador.</p>
+          <p>GitHub Actions com cron trimestral monitora novo período disponível no endpoint OData do BACEN (<code>olinda.bcb.gov.br/olinda/servico/IFDATA/versao/v1/odata</code>). Pode ser disparado manualmente pelo orquestrador.</p>
           <span class="tag">GitHub Actions · cron</span>
         </div>
       </div>
       <div class="pipeline-step">
         <div class="step-num">02</div>
         <div class="step-body">
-          <h3>Extração com paginação e checkpointing</h3>
-          <p>O scraper itera ano → trimestre → relatório → tipo de IF com paginação <code>$top/$skip</code>. CSVs brutos salvos em <code>data/raw/</code> como checkpoint — trimestres já coletados são ignorados em re-execuções.</p>
-          <span class="tag">bacen_ifdata.py · OData v4 · paginação</span>
+          <h3>Extração OData adaptativa e consolidação dos 16 relatórios</h3>
+          <p>Os scrapers coletam <code>IfDataCadastro</code> e <code>IfDataValores</code> (relatórios 1 a 16) com paginação adaptativa (primeira página sem <code>$top/$skip</code>, páginas seguintes paginadas) e salvam checkpoints Parquet em <code>data/raw/</code>, consolidando os 16 datasets completos em <code>data/bacen_*.csv.gz</code>.</p>
+          <span class="tag">odata.py · ifdata_relatorio.py · Polars</span>
         </div>
       </div>
       <div class="pipeline-step">
         <div class="step-num">03</div>
         <div class="step-body">
-          <h3>Normalização: pivot semântico COSIF</h3>
-          <p>35 contas COSIF mapeadas via <code>cosif_semantic_mapping.csv</code> são pivotadas em colunas legíveis. ROE, ROA e NIM calculados. Cadastro de IFs enriquecido via fallback <code>CodInst</code>. Equivalências de quebra de série aplicadas via <code>cosif_de_para.csv</code>.</p>
-          <span class="tag">normalizer.py · pandas</span>
+          <h3>Normalização: pivot semântico COSIF + join cadastro</h3>
+          <p>56 contas COSIF (pré e pós-2025) mapeadas via <code>cosif_semantic_mapping.csv</code> são pivotadas em linha única por <code>(CodInst, AnoMes, TipoInstituicao)</code>. ROE, ROA e NIM são calculados e enriquecidos com o histórico completo de <code>cadastro_ifs.csv</code>.</p>
+          <span class="tag">normalizer.py · enriquecer_cadastro.py · Polars</span>
         </div>
       </div>
       <div class="pipeline-step">
@@ -634,18 +640,18 @@
       </div>
       <div class="agenda-row">
         <span class="a-time">T+1 dia</span>
-        <span class="a-desc">Extração paralela — 11 relatórios × 3 tipos de IF, com checkpointing</span>
-        <div class="a-tags"><span class="a-tag">data/raw/</span></div>
+        <span class="a-desc">Extração e consolidação — 16 relatórios + cadastro de IFs, com checkpointing</span>
+        <div class="a-tags"><span class="a-tag">data/raw/</span><span class="a-tag">data/bacen_*.csv.gz</span></div>
       </div>
       <div class="agenda-row">
         <span class="a-time">T+1 dia</span>
         <span class="a-desc">Pivot semântico, indicadores e join de cadastro</span>
-        <div class="a-tags"><span class="a-tag">data/processed/</span></div>
+        <div class="a-tags"><span class="a-tag">data/processed/</span><span class="a-tag">cadastro_ifs.csv</span></div>
       </div>
       <div class="agenda-row">
         <span class="a-time">T+1 dia</span>
         <span class="a-desc">Derivadas: market share, HHI, rankings, QoQ/YoY</span>
-        <div class="a-tags"><span class="a-tag">data/</span><span class="a-tag">derivadas_*.csv</span></div>
+        <div class="a-tags"><span class="a-tag">data/</span><span class="a-tag">derivadas_*.csv.gz</span></div>
       </div>
       <div class="agenda-row">
         <span class="a-time">T+1 dia</span>
@@ -661,11 +667,13 @@
   <div class="section-inner">
     <div class="eyebrow">Downloads</div>
     <h2 class="section-title">Datasets disponíveis</h2>
-    <p class="section-sub">CSVs gerados e versionados pelo pipeline. Atualizados a cada nova divulgação trimestral do BACEN.</p>
+    <p class="section-sub">22 datasets versionados pelo pipeline (série consolidada, os 16 relatórios completos do IFData, cadastro histórico e métricas derivadas). Atualizados a cada divulgação trimestral do BACEN.</p>
 
     <div class="filter-bar">
       <button class="filter-btn active" onclick="filterDs('todos',this)">🌐 Todos</button>
       <button class="filter-btn" onclick="filterDs('balanco',this)">◈ Balanço</button>
+      <button class="filter-btn" onclick="filterDs('credito',this)">▣ Crédito</button>
+      <button class="filter-btn" onclick="filterDs('cambio',this)">⇄ Câmbio</button>
       <button class="filter-btn" onclick="filterDs('cadastro',this)">◉ Cadastro</button>
       <button class="filter-btn" onclick="filterDs('derivadas',this)">◆ Derivadas</button>
     </div>
@@ -696,6 +704,7 @@
 
     <div class="schema-tabs">
       <div class="schema-tab active" onclick="switchSchema('historico',this)">Série Histórica</div>
+      <div class="schema-tab" onclick="switchSchema('relatorios',this)">Relatórios IFData (1–16)</div>
       <div class="schema-tab" onclick="switchSchema('cadastro',this)">Cadastro IFs</div>
       <div class="schema-tab" onclick="switchSchema('derivadas',this)">Métricas derivadas</div>
     </div>
@@ -705,17 +714,40 @@
           <thead><tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr></thead>
           <tbody>
             <tr><td class="col-field">data_base</td><td class="col-type">date</td><td class="col-desc">Data de referência do trimestre (YYYY-MM-DD)</td></tr>
-            <tr><td class="col-field">cod_inst</td><td class="col-type">string</td><td class="col-desc">Código da instituição no IFData (CodInst)</td></tr>
-            <tr><td class="col-field">nome_if</td><td class="col-type">string</td><td class="col-desc">Nome da instituição financeira</td></tr>
-            <tr><td class="col-field">tipo_inst</td><td class="col-type">int</td><td class="col-desc">Tipo: 1=conglomerado prudencial, 2=conglomerado financeiro, 3=IF individual</td></tr>
-            <tr><td class="col-field">ativo_total</td><td class="col-type">float</td><td class="col-desc">Ativo total (R$ mil) — mapeado semanticamente de contas COSIF</td></tr>
-            <tr><td class="col-field">patrimonio_liquido</td><td class="col-type">float</td><td class="col-desc">Patrimônio líquido (R$ mil)</td></tr>
-            <tr><td class="col-field">resultado_periodo</td><td class="col-type">float</td><td class="col-desc">Resultado do período (R$ mil)</td></tr>
-            <tr><td class="col-field">roe</td><td class="col-type">float</td><td class="col-desc">Return on equity — calculado pelo pipeline</td></tr>
-            <tr><td class="col-field">roa</td><td class="col-type">float</td><td class="col-desc">Return on assets — calculado pelo pipeline</td></tr>
-            <tr><td class="col-field">nim</td><td class="col-type">float</td><td class="col-desc">Net Interest Margin — calculado pelo pipeline</td></tr>
-            <tr><td class="col-field">indice_basileia</td><td class="col-type">float</td><td class="col-desc">Índice de Basileia (%) — relatório 05</td></tr>
-            <tr><td class="col-field">segmento</td><td class="col-type">string</td><td class="col-desc">Segmento prudencial S1–S5 — relatório 06</td></tr>
+            <tr><td class="col-field">AnoMes</td><td class="col-type">int</td><td class="col-desc">Período trimestral no formato YYYYMM (ex: 202606)</td></tr>
+            <tr><td class="col-field">CodInst</td><td class="col-type">string</td><td class="col-desc">Código da instituição ou conglomerado no IFData</td></tr>
+            <tr><td class="col-field">TipoInstituicao</td><td class="col-type">int</td><td class="col-desc">1=Conglomerado Prudencial, 2=Conglomerado Financeiro, 3=IF Individual, 4=Cooperativas</td></tr>
+            <tr><td class="col-field">NomeInstituicao</td><td class="col-type">string</td><td class="col-desc">Nome da instituição financeira (enriquecido via cadastro histórico)</td></tr>
+            <tr><td class="col-field">Segmento</td><td class="col-type">string</td><td class="col-desc">Segmento prudencial S1–S5 (ou tipo de instituição no cadastro)</td></tr>
+            <tr><td class="col-field">UF</td><td class="col-type">string</td><td class="col-desc">Unidade da Federação da sede da instituição</td></tr>
+            <tr><td class="col-field">ativo_total</td><td class="col-type">float</td><td class="col-desc">Ativo total / Ativo ajustado (R$ mil) — Relatórios 1 e 2</td></tr>
+            <tr><td class="col-field">carteira_credito</td><td class="col-type">float</td><td class="col-desc">Carteira de crédito classificada / operações de crédito (R$ mil)</td></tr>
+            <tr><td class="col-field">passivo_total</td><td class="col-type">float</td><td class="col-desc">Passivo total (R$ mil) — Relatório 3</td></tr>
+            <tr><td class="col-field">captacoes</td><td class="col-type">float</td><td class="col-desc">Captações totais: depósitos + emissões + obrigações por repasse (R$ mil)</td></tr>
+            <tr><td class="col-field">patrimonio_liquido</td><td class="col-type">float</td><td class="col-desc">Patrimônio líquido (R$ mil) — Relatórios 1 e 3</td></tr>
+            <tr><td class="col-field">lucro_liquido</td><td class="col-type">float</td><td class="col-desc">Lucro líquido do período (R$ mil) — Relatórios 1 e 4</td></tr>
+            <tr><td class="col-field">indice_basileia</td><td class="col-type">float</td><td class="col-desc">Índice de Basileia (decimal, ex: 0.165 = 16,5%) — Relatórios 1 e 5</td></tr>
+            <tr><td class="col-field">roe_anualizado</td><td class="col-type">float</td><td class="col-desc">Return on Equity anualizado — calculado pelo pipeline</td></tr>
+            <tr><td class="col-field">roa_anualizado</td><td class="col-type">float</td><td class="col-desc">Return on Assets anualizado — calculado pelo pipeline</td></tr>
+            <tr><td class="col-field">nim_margem_financeira</td><td class="col-type">float</td><td class="col-desc">Net Interest Margin anualizado — calculado pelo pipeline</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="schema-relatorios" class="schema-panel">
+        <table>
+          <thead><tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr></thead>
+          <tbody>
+            <tr><td class="col-field">AnoMes</td><td class="col-type">int</td><td class="col-desc">Período trimestral de referência (YYYYMM, ex: 202606)</td></tr>
+            <tr><td class="col-field">CodInst</td><td class="col-type">string</td><td class="col-desc">Código da instituição ou conglomerado no IFData</td></tr>
+            <tr><td class="col-field">TipoInstituicao</td><td class="col-type">int</td><td class="col-desc">Código numérico do tipo de instituição (1, 2, 3 ou 4)</td></tr>
+            <tr><td class="col-field">tipo_instituicao_label</td><td class="col-type">string</td><td class="col-desc">Rótulo descritivo (`conglomerado_prudencial`, `conglomerado_financeiro`, `individual`, `cooperativas`)</td></tr>
+            <tr><td class="col-field">NomeRelatorio</td><td class="col-type">string</td><td class="col-desc">Nome oficial do relatório no IFData (ex: `Passivo`, `Resumo`)</td></tr>
+            <tr><td class="col-field">NumeroRelatorio</td><td class="col-type">string</td><td class="col-desc">Número oficial do relatório (`1` a `16`)</td></tr>
+            <tr><td class="col-field">Grupo</td><td class="col-type">string</td><td class="col-desc">Agrupamento contábil ou modalidade de crédito no relatório</td></tr>
+            <tr><td class="col-field">Conta</td><td class="col-type">string</td><td class="col-desc">Código da conta/ rubrica no IFData (ex: `78282`, `140239`)</td></tr>
+            <tr><td class="col-field">NomeColuna</td><td class="col-type">string</td><td class="col-desc">Nome da linha/coluna reportada pela instituição</td></tr>
+            <tr><td class="col-field">DescricaoColuna</td><td class="col-type">string</td><td class="col-desc">Descrição detalhada da rubrica contábil ou faixa de vencimento/risco</td></tr>
+            <tr><td class="col-field">Saldo</td><td class="col-type">float</td><td class="col-desc">Valor ou saldo reportado na data-base</td></tr>
           </tbody>
         </table>
       </div>
@@ -723,11 +755,17 @@
         <table>
           <thead><tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr></thead>
           <tbody>
-            <tr><td class="col-field">cod_inst</td><td class="col-type">string</td><td class="col-desc">Código da instituição no IFData (CodInst) — chave primária</td></tr>
-            <tr><td class="col-field">nome_if</td><td class="col-type">string</td><td class="col-desc">Nome da instituição financeira (mapeamento manual para as maiores IFs)</td></tr>
-            <tr><td class="col-field">segmento</td><td class="col-type">string</td><td class="col-desc">Segmento prudencial BACEN: S1, S2, S3, S4, S5</td></tr>
-            <tr><td class="col-field">fonte_cadastro</td><td class="col-type">string</td><td class="col-desc">"api" ou "fallback" — indica se veio da API ou do fallback CodInst</td></tr>
-            <tr><td class="col-field">data_base</td><td class="col-type">date</td><td class="col-desc">Trimestre mais recente em que a IF aparece nos dados</td></tr>
+            <tr><td class="col-field">CodInst</td><td class="col-type">string</td><td class="col-desc">Código da instituição ou conglomerado no IFData</td></tr>
+            <tr><td class="col-field">AnoMes</td><td class="col-type">int</td><td class="col-desc">Período trimestral do cadastro (YYYYMM, de 201403 ao presente)</td></tr>
+            <tr><td class="col-field">NomeInstituicao</td><td class="col-type">string</td><td class="col-desc">Nome oficial da instituição financeira ou conglomerado</td></tr>
+            <tr><td class="col-field">Segmento</td><td class="col-type">string</td><td class="col-desc">Segmento de Resolução (S1–S5) com fallback para tipo de instituição</td></tr>
+            <tr><td class="col-field">SegmentoTb</td><td class="col-type">string</td><td class="col-desc">Tipo societário/regulatório da instituição (ex: Banco Múltiplo, Cooperativa, SCD)</td></tr>
+            <tr><td class="col-field">Sr</td><td class="col-type">string</td><td class="col-desc">Segmento de Resolução original reportado pelo BACEN (S1 a S5)</td></tr>
+            <tr><td class="col-field">UF</td><td class="col-type">string</td><td class="col-desc">Sigla da Unidade da Federação da sede</td></tr>
+            <tr><td class="col-field">Municipio</td><td class="col-type">string</td><td class="col-desc">Município da sede da instituição</td></tr>
+            <tr><td class="col-field">Conglomerado</td><td class="col-type">string</td><td class="col-desc">Código do conglomerado prudencial/financeiro ao qual pertence</td></tr>
+            <tr><td class="col-field">CnpjInstituicaoLider</td><td class="col-type">string</td><td class="col-desc">CNPJ de 8 dígitos da instituição líder do conglomerado</td></tr>
+            <tr><td class="col-field">Situacao</td><td class="col-type">string</td><td class="col-desc">Situação cadastral no trimestre (`A` = Ativa, `I` = Inativa)</td></tr>
           </tbody>
         </table>
       </div>
@@ -735,15 +773,16 @@
         <table>
           <thead><tr><th>Campo</th><th>Tipo</th><th>Descrição</th></tr></thead>
           <tbody>
-            <tr><td class="col-field">data_base</td><td class="col-type">date</td><td class="col-desc">Data de referência do trimestre</td></tr>
-            <tr><td class="col-field">cod_inst</td><td class="col-type">string</td><td class="col-desc">Código da instituição financeira (CodInst)</td></tr>
-            <tr><td class="col-field">nome_if</td><td class="col-type">string</td><td class="col-desc">Nome da instituição financeira</td></tr>
-            <tr><td class="col-field">market_share_pct</td><td class="col-type">float</td><td class="col-desc">Participação de mercado no ativo total do segmento (%)</td></tr>
-            <tr><td class="col-field">hhi_segmento</td><td class="col-type">float</td><td class="col-desc">Índice Herfindahl-Hirschman de concentração (0–10000)</td></tr>
-            <tr><td class="col-field">var_qoq</td><td class="col-type">float</td><td class="col-desc">Variação do ativo total vs. trimestre anterior (%)</td></tr>
-            <tr><td class="col-field">var_yoy</td><td class="col-type">float</td><td class="col-desc">Variação do ativo total vs. mesmo trimestre do ano anterior (%)</td></tr>
-            <tr><td class="col-field">ranking_ativo</td><td class="col-type">int</td><td class="col-desc">Posição no ranking por ativo total no trimestre</td></tr>
-            <tr><td class="col-field">ranking_carteira</td><td class="col-type">int</td><td class="col-desc">Posição no ranking por carteira de crédito total</td></tr>
+            <tr><td class="col-field">data_base</td><td class="col-type">date</td><td class="col-desc">Data de referência do trimestre (YYYY-MM-DD)</td></tr>
+            <tr><td class="col-field">AnoMes</td><td class="col-type">int</td><td class="col-desc">Período trimestral (YYYYMM)</td></tr>
+            <tr><td class="col-field">CodInst</td><td class="col-type">string</td><td class="col-desc">Código da instituição financeira (CodInst)</td></tr>
+            <tr><td class="col-field">NomeInstituicao</td><td class="col-type">string</td><td class="col-desc">Nome da instituição financeira</td></tr>
+            <tr><td class="col-field">Segmento</td><td class="col-type">string</td><td class="col-desc">Segmento prudencial (S1–S5)</td></tr>
+            <tr><td class="col-field">market_share_pct</td><td class="col-type">float</td><td class="col-desc">Participação de mercado na carteira de crédito do trimestre (%)</td></tr>
+            <tr><td class="col-field">hhi</td><td class="col-type">float</td><td class="col-desc">Índice Herfindahl-Hirschman de concentração do trimestre (0–10000)</td></tr>
+            <tr><td class="col-field">var_qoq_pct</td><td class="col-type">float</td><td class="col-desc">Variação da carteira de crédito vs. trimestre anterior (%)</td></tr>
+            <tr><td class="col-field">var_yoy_pct</td><td class="col-type">float</td><td class="col-desc">Variação da carteira de crédito vs. mesmo trimestre do ano anterior (%)</td></tr>
+            <tr><td class="col-field">ranking</td><td class="col-type">int</td><td class="col-desc">Posição no ranking por ativo total no trimestre</td></tr>
           </tbody>
         </table>
       </div>
@@ -832,8 +871,11 @@ BASE = <span class="cm">"https://raw.githubusercontent.com/PulseDataLabs/PulseIF
 <span class="cm"># Série histórica consolidada (10+ anos)</span>
 df = pd.read_csv(BASE + <span class="cm">"data/processed/ifdata_historical_lite.csv"</span>)
 
+<span class="cm"># Relatório específico completo (ex.: Relatório 3 - Passivo)</span>
+df_passivo = pd.read_csv(BASE + <span class="cm">"data/bacen_passivo.csv.gz"</span>, compression=<span class="cm">"gzip"</span>)
+
 <span class="cm"># Rankings mais recentes</span>
-df_rank = pd.read_csv(BASE + <span class="cm">"data/derivadas_rankings.csv"</span>)</pre>
+df_rank = pd.read_csv(BASE + <span class="cm">"data/derivadas_rankings.csv.gz"</span>, compression=<span class="cm">"gzip"</span>)</pre>
     </div>
   </div>
 </section>
@@ -856,14 +898,15 @@ df_rank = pd.read_csv(BASE + <span class="cm">"data/derivadas_rankings.csv"</spa
 <script>
 /* ── Ticker ── */
 const TICKS = [
-  { lbl:'SFN · Relatórios cobertos', val:'11', cls:'' },
+  { lbl:'SFN · Relatórios cobertos', val:'16', cls:'pos' },
   { lbl:'Série histórica desde', val:'2014', cls:'pos' },
-  { lbl:'Tipos de IF por relatório', val:'3', cls:'' },
-  { lbl:'Contas COSIF mapeadas', val:'35', cls:'pos' },
+  { lbl:'Datasets publicados', val:'22', cls:'pos' },
+  { lbl:'Contas COSIF mapeadas', val:'56', cls:'pos' },
+  { lbl:'Cadastro histórico IFs', val:'265k+ reg.', cls:'pos' },
   { lbl:'Datasets derivados', val:'4', cls:'' },
   { lbl:'Pipeline', val:'Serverless', cls:'pos' },
   { lbl:'Frequência', val:'Trimestral', cls:'' },
-  { lbl:'Formato', val:'UTF-8 CSV', cls:'' },
+  { lbl:'Formato', val:'UTF-8 CSV / GZ', cls:'' },
   { lbl:'Licença código', val:'MIT', cls:'' },
   { lbl:'Dados BACEN', val:'ODbL', cls:'pos' },
   { lbl:'HHI Concentração', val:'calculado', cls:'' },
@@ -958,66 +1001,66 @@ const DS = [
     name: 'bacen_credito_indexador.csv.gz',
     path: 'data/bacen_credito_indexador.csv.gz',
     desc: 'Relatório 7 do IFData — Carteira de Crédito Ativa por indexador (prefixado, CDI/Selic, TR, TJLP, IPCA, câmbio)',
-    freq: 'Trimestral', src: 'BACEN', cat: 'balanco'
+    freq: 'Trimestral', src: 'BACEN', cat: 'credito'
   },
   {
     name: 'bacen_credito_nivel_risco.csv.gz',
     path: 'data/bacen_credito_nivel_risco.csv.gz',
     desc: 'Relatório 8 do IFData — Carteira de Crédito Ativa por nível de risco da operação (AA a H)',
-    freq: 'Trimestral', src: 'BACEN', cat: 'balanco'
+    freq: 'Trimestral', src: 'BACEN', cat: 'credito'
   },
   {
     name: 'bacen_credito_regiao.csv.gz',
     path: 'data/bacen_credito_regiao.csv.gz',
     desc: 'Relatório 9 do IFData — Carteira de Crédito Ativa por região geográfica',
-    freq: 'Trimestral', src: 'BACEN', cat: 'balanco'
+    freq: 'Trimestral', src: 'BACEN', cat: 'credito'
   },
   {
     name: 'bacen_credito_clientes_operacoes.csv.gz',
     path: 'data/bacen_credito_clientes_operacoes.csv.gz',
     desc: 'Relatório 10 do IFData — Carteira de Crédito Ativa: quantidade de clientes e de operações',
-    freq: 'Trimestral', src: 'BACEN', cat: 'balanco'
+    freq: 'Trimestral', src: 'BACEN', cat: 'credito'
   },
   {
     name: 'bacen_credito_pf_modalidade_prazo.csv.gz',
     path: 'data/bacen_credito_pf_modalidade_prazo.csv.gz',
     desc: 'Relatório 11 do IFData — Carteira de Crédito Ativa Pessoa Física por modalidade e prazo de vencimento',
-    freq: 'Trimestral', src: 'BACEN', cat: 'balanco'
+    freq: 'Trimestral', src: 'BACEN', cat: 'credito'
   },
   {
     name: 'bacen_credito_pj_cnae.csv.gz',
     path: 'data/bacen_credito_pj_cnae.csv.gz',
     desc: 'Relatório 12 do IFData — Carteira de Crédito Ativa Pessoa Jurídica por atividade econômica (CNAE)',
-    freq: 'Trimestral', src: 'BACEN', cat: 'balanco'
+    freq: 'Trimestral', src: 'BACEN', cat: 'credito'
   },
   {
     name: 'bacen_credito_pj_modalidade_prazo.csv.gz',
     path: 'data/bacen_credito_pj_modalidade_prazo.csv.gz',
     desc: 'Relatório 13 do IFData — Carteira de Crédito Ativa Pessoa Jurídica por modalidade e prazo de vencimento',
-    freq: 'Trimestral', src: 'BACEN', cat: 'balanco'
+    freq: 'Trimestral', src: 'BACEN', cat: 'credito'
   },
   {
     name: 'bacen_credito_pj_porte.csv.gz',
     path: 'data/bacen_credito_pj_porte.csv.gz',
     desc: 'Relatório 14 do IFData — Carteira de Crédito Ativa Pessoa Jurídica por porte do tomador',
-    freq: 'Trimestral', src: 'BACEN', cat: 'balanco'
+    freq: 'Trimestral', src: 'BACEN', cat: 'credito'
   },
   {
     name: 'bacen_cambio_trimestre.csv.gz',
     path: 'data/bacen_cambio_trimestre.csv.gz',
     desc: 'Relatório 15 do IFData — Movimentação de Câmbio no Trimestre',
-    freq: 'Trimestral', src: 'BACEN', cat: 'balanco'
+    freq: 'Trimestral', src: 'BACEN', cat: 'cambio'
   },
   {
     name: 'bacen_credito_instrumentos_financeiros.csv.gz',
     path: 'data/bacen_credito_instrumentos_financeiros.csv.gz',
     desc: 'Relatório 16 do IFData — Carteira de Crédito Ativa por carteiras de instrumentos financeiros (Res. 4.966)',
-    freq: 'Trimestral', src: 'BACEN', cat: 'balanco'
+    freq: 'Trimestral', src: 'BACEN', cat: 'credito'
   },
   {
     name: 'cadastro_ifs.csv',
     path: 'data/cadastro_ifs.csv',
-    desc: 'Cadastro de IFs — CodInst, nome, segmento prudencial (fallback)',
+    desc: 'Cadastro histórico completo de IFs (2014–presente) — CodInst, nome, segmento S1–S5, UF, município e conglomerado',
     freq: 'Trimestral', src: 'BACEN', cat: 'cadastro'
   },
   {
