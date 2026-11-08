@@ -21,21 +21,31 @@ extraction:
     - id: "3"
       name: "Passivo"
     - id: "4"
-      name: "Demonstracao de Resultado"
+      name: "Demonstração de Resultado"
     - id: "5"
-      name: "Informacoes de Capital"
+      name: "Informações de Capital"
     - id: "6"
-      name: "Segmentacao"
+      name: "Segmentação"
     - id: "7"
-      name: "Carteira de Credito Ativa - Por indexador"
+      name: "Carteira de Crédito Ativa - Por indexador"
     - id: "8"
-      name: "Carteira de Credito Ativa - por nivel de risco"
+      name: "Carteira de crédito ativa - por nível de risco da operação"
     - id: "9"
-      name: "Carteira de Credito Ativa - por regiao geografica"
+      name: "Carteira de crédito ativa - por região geográfica"
+    - id: "10"
+      name: "Carteira de crédito ativa - quantidade de clientes e de operações"
     - id: "11"
-      name: "Carteira de Credito PF - modalidade e prazo"
+      name: "Carteira de crédito ativa Pessoa Física - modalidade e prazo de vencimento"
+    - id: "12"
+      name: "Carteira de crédito ativa Pessoa Jurídica - por atividade econômica (CNAE)"
     - id: "13"
-      name: "Carteira de Credito PJ - modalidade e prazo"
+      name: "Carteira de crédito ativa Pessoa Jurídica - modalidade e prazo de vencimento"
+    - id: "14"
+      name: "Carteira de crédito ativa Pessoa Jurídica - por porte do tomador"
+    - id: "15"
+      name: "Movimentação de Câmbio no Trimestre"
+    - id: "16"
+      name: "Carteira de crédito ativa - por carteiras de instrumentos financeiros"
 
   institution_types:
     - codigo: 1
@@ -44,6 +54,8 @@ extraction:
       label: "conglomerados_financeiros"
     - codigo: 3
       label: "instituicoes_individuais"
+    - codigo: 4
+      label: "instituicoes_cambio"
 
   time_range:
     start_year: 2014

@@ -25,7 +25,7 @@ def _carregar_settings() -> dict:
 class BacenIfdataScraper(BaseScraper):
     name = "bacen_ifdata"
     group = "bacen"
-    enabled = True
+    enabled = False
     phase = 1
     accumulate = False
     save_csv = False

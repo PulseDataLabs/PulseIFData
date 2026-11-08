@@ -328,8 +328,23 @@
     <div class="filter-group filter-group-wide">
       <label>Dataset</label>
       <select id="filtro-dataset">
-        <option value="historico">Série Histórica (balanço + indicadores) [~22 MB]</option>
-        <option value="passivo">Passivo IFData — Relatório 3 (Trimestral) [~33 MB]</option>
+        <option value="historico">Série Histórica (balanço + indicadores) [~11 MB]</option>
+        <option value="resumo">Relatório 1 — Resumo IFData [~17 MB]</option>
+        <option value="ativo">Relatório 2 — Ativo IFData [~30 MB]</option>
+        <option value="passivo">Relatório 3 — Passivo IFData [~33 MB]</option>
+        <option value="dre">Relatório 4 — Demonstração de Resultado (DRE) [~62 MB]</option>
+        <option value="informacoes-capital">Relatório 5 — Informações de Capital (Série Completa) [~11 MB]</option>
+        <option value="segmentacao">Relatório 6 — Segmentação Prudencial [~1.7 MB]</option>
+        <option value="credito-indexador">Relatório 7 — Crédito por Indexador [~7.5 MB]</option>
+        <option value="credito-nivel-risco">Relatório 8 — Crédito por Nível de Risco [~5.8 MB]</option>
+        <option value="credito-regiao">Relatório 9 — Crédito por Região Geográfica [~4.7 MB]</option>
+        <option value="credito-clientes-operacoes">Relatório 10 — Crédito: Clientes e Operações [~1.1 MB]</option>
+        <option value="credito-pf-modalidade">Relatório 11 — Crédito PF: Modalidade e Prazo [~25 MB]</option>
+        <option value="credito-pj-cnae">Relatório 12 — Crédito PJ: Atividade Econômica (CNAE) [~33 MB]</option>
+        <option value="credito-pj-modalidade">Relatório 13 — Crédito PJ: Modalidade e Prazo [~28 MB]</option>
+        <option value="credito-pj-porte">Relatório 14 — Crédito PJ: Porte do Tomador [~4.0 MB]</option>
+        <option value="cambio-trimestre">Relatório 15 — Movimentação de Câmbio no Trimestre [~1.1 MB]</option>
+        <option value="credito-instrumentos">Relatório 16 — Crédito: Instrumentos Financeiros [~780 KB]</option>
         <option value="cadastro">Cadastro de IFs [~50 MB]</option>
         <option value="conglomerados">Conglomerados Financeiros (Mensal) [~180 KB]</option>
         <option value="balancetes">Balancetes de Bancos COSIF (Mensal) [~7.0 MB]</option>
@@ -397,9 +412,24 @@ const BASE = window.location.hostname === 'localhost' || window.location.hostnam
   ? './' 
   : 'https://raw.githubusercontent.com/PulseDataLabs/PulseIFData/main/';
 const DATASETS = {
-  'historico':     { url: BASE + 'data/processed/ifdata_historical_lite.csv', label: 'Série Histórica' },
-  'passivo':       { url: BASE + 'data/bacen_passivo.csv.gz', label: 'Passivo IFData (Relatório 3)' },
-  'cadastro':      { url: BASE + 'data/cadastro_ifs.csv', label: 'Cadastro IFs' },
+  'historico':                  { url: BASE + 'data/processed/ifdata_historical_lite.csv', label: 'Série Histórica' },
+  'resumo':                     { url: BASE + 'data/bacen_resumo.csv.gz', label: 'Relatório 1 — Resumo IFData' },
+  'ativo':                      { url: BASE + 'data/bacen_ativo.csv.gz', label: 'Relatório 2 — Ativo IFData' },
+  'passivo':                    { url: BASE + 'data/bacen_passivo.csv.gz', label: 'Relatório 3 — Passivo IFData' },
+  'dre':                        { url: BASE + 'data/bacen_dre.csv.gz', label: 'Relatório 4 — Demonstração de Resultado' },
+  'informacoes-capital':        { url: BASE + 'data/bacen_informacoes_capital.csv.gz', label: 'Relatório 5 — Informações de Capital' },
+  'segmentacao':                { url: BASE + 'data/bacen_segmentacao.csv.gz', label: 'Relatório 6 — Segmentação' },
+  'credito-indexador':          { url: BASE + 'data/bacen_credito_indexador.csv.gz', label: 'Relatório 7 — Crédito por Indexador' },
+  'credito-nivel-risco':        { url: BASE + 'data/bacen_credito_nivel_risco.csv.gz', label: 'Relatório 8 — Crédito por Nível de Risco' },
+  'credito-regiao':             { url: BASE + 'data/bacen_credito_regiao.csv.gz', label: 'Relatório 9 — Crédito por Região Geográfica' },
+  'credito-clientes-operacoes': { url: BASE + 'data/bacen_credito_clientes_operacoes.csv.gz', label: 'Relatório 10 — Clientes e Operações' },
+  'credito-pf-modalidade':      { url: BASE + 'data/bacen_credito_pf_modalidade_prazo.csv.gz', label: 'Relatório 11 — Crédito PF: Modalidade e Prazo' },
+  'credito-pj-cnae':            { url: BASE + 'data/bacen_credito_pj_cnae.csv.gz', label: 'Relatório 12 — Crédito PJ: CNAE' },
+  'credito-pj-modalidade':      { url: BASE + 'data/bacen_credito_pj_modalidade_prazo.csv.gz', label: 'Relatório 13 — Crédito PJ: Modalidade e Prazo' },
+  'credito-pj-porte':           { url: BASE + 'data/bacen_credito_pj_porte.csv.gz', label: 'Relatório 14 — Crédito PJ: Porte do Tomador' },
+  'cambio-trimestre':           { url: BASE + 'data/bacen_cambio_trimestre.csv.gz', label: 'Relatório 15 — Movimentação de Câmbio' },
+  'credito-instrumentos':       { url: BASE + 'data/bacen_credito_instrumentos_financeiros.csv.gz', label: 'Relatório 16 — Instrumentos Financeiros' },
+  'cadastro':                   { url: BASE + 'data/cadastro_ifs.csv', label: 'Cadastro IFs' },
   'conglomerados': { url: BASE + 'data/bacen_conglomerados.csv', label: 'Conglomerados Financeiros' },
   'balancetes':    { url: BASE + 'data/bacen_balancetes_bancos.csv', label: 'Balancetes COSIF' },
   'basileia':      { url: BASE + 'data/bacen_parcelas_capital_basileia.csv', label: 'Parcelas de Capital' },
@@ -551,6 +581,30 @@ function getColDefs(key) {
       { data: 'var_yoy_pct', title: 'Var YoY', render: v => v ? parseFloat(v).toFixed(2)+'%' : '-' }
     ],
   };
+  const ifdataRelCols = [
+    { data: 'AnoMes', title: 'Período' },
+    { data: 'CodInst', title: 'Código' },
+    { data: 'tipo_instituicao_label', title: 'Tipo Inst.' },
+    { data: 'Grupo', title: 'Grupo' },
+    { data: 'Conta', title: 'Conta' },
+    { data: 'NomeColuna', title: 'Coluna' },
+    { data: 'DescricaoColuna', title: 'Descrição' },
+    { data: 'Saldo', title: 'Valor', render: v => {
+        if (!v) return '-';
+        const n = parseFloat(v);
+        if (isNaN(n)) return v;
+        return n.toLocaleString('pt-BR', {maximumFractionDigits: 2});
+      }
+    }
+  ];
+  const relKeys = [
+    'resumo', 'ativo', 'passivo', 'dre', 'informacoes-capital', 'segmentacao',
+    'credito-indexador', 'credito-nivel-risco', 'credito-regiao',
+    'credito-clientes-operacoes', 'credito-pf-modalidade', 'credito-pj-cnae',
+    'credito-pj-modalidade', 'credito-pj-porte', 'cambio-trimestre',
+    'credito-instrumentos'
+  ];
+  if (relKeys.includes(key)) return ifdataRelCols;
   return defs[key] || [];
 }
 

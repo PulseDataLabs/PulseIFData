@@ -16,12 +16,132 @@
     "cat": "balanco"
   },
   {
+    "id": "bacen_resumo",
+    "name": "bacen_resumo.csv.gz",
+    "desc": "Relatório 1 (Resumo) do IFData: ativo total, carteira de crédito, TVM, passivo exigível, captações, PL, lucro e Basileia",
+    "freq": "Trimestral",
+    "fonte": "BACEN",
+    "cat": "balanco"
+  },
+  {
+    "id": "bacen_ativo",
+    "name": "bacen_ativo.csv.gz",
+    "desc": "Relatório 2 (Ativo) do IFData: disponibilidades, aplicações de liquidez, TVM e derivativos, crédito e ativo total",
+    "freq": "Trimestral",
+    "fonte": "BACEN",
+    "cat": "balanco"
+  },
+  {
     "id": "bacen_passivo",
     "name": "bacen_passivo.csv.gz",
     "desc": "Relatório 3 (Passivo) do IFData: depósitos, captações, obrigações e patrimônio líquido por IF/trimestre",
     "freq": "Trimestral",
     "fonte": "BACEN",
     "cat": "balanco"
+  },
+  {
+    "id": "bacen_dre",
+    "name": "bacen_dre.csv.gz",
+    "desc": "Relatório 4 (Demonstração de Resultado - DRE) do IFData: receitas de intermediação, despesas de captação, tarifas e lucro líquido",
+    "freq": "Trimestral",
+    "fonte": "BACEN",
+    "cat": "balanco"
+  },
+  {
+    "id": "bacen_informacoes_capital",
+    "name": "bacen_informacoes_capital.csv.gz",
+    "desc": "Relatório 5 (Informações de Capital) do IFData: Capital Principal, PR Nível I e II, RWA, Exposição Total e Índice de Basileia",
+    "freq": "Trimestral",
+    "fonte": "BACEN",
+    "cat": "balanco"
+  },
+  {
+    "id": "bacen_segmentacao",
+    "name": "bacen_segmentacao.csv.gz",
+    "desc": "Relatório 6 (Segmentação) do IFData: enquadramento nos segmentos prudenciais S1–S5, exposição e porte (% PIB)",
+    "freq": "Trimestral",
+    "fonte": "BACEN",
+    "cat": "cadastro"
+  },
+  {
+    "id": "bacen_credito_indexador",
+    "name": "bacen_credito_indexador.csv.gz",
+    "desc": "Relatório 7 do IFData: Carteira de Crédito Ativa por indexador (prefixado, CDI/Selic, TR, TJLP, IPCA, câmbio)",
+    "freq": "Trimestral",
+    "fonte": "BACEN",
+    "cat": "credito"
+  },
+  {
+    "id": "bacen_credito_nivel_risco",
+    "name": "bacen_credito_nivel_risco.csv.gz",
+    "desc": "Relatório 8 do IFData: Carteira de Crédito Ativa por nível de risco da operação (AA a H)",
+    "freq": "Trimestral",
+    "fonte": "BACEN",
+    "cat": "credito"
+  },
+  {
+    "id": "bacen_credito_regiao",
+    "name": "bacen_credito_regiao.csv.gz",
+    "desc": "Relatório 9 do IFData: Carteira de Crédito Ativa por região geográfica (Norte, Nordeste, Centro-Oeste, Sudeste, Sul e Exterior)",
+    "freq": "Trimestral",
+    "fonte": "BACEN",
+    "cat": "credito"
+  },
+  {
+    "id": "bacen_credito_clientes_operacoes",
+    "name": "bacen_credito_clientes_operacoes.csv.gz",
+    "desc": "Relatório 10 do IFData: Carteira de Crédito Ativa — quantidade de clientes e de operações",
+    "freq": "Trimestral",
+    "fonte": "BACEN",
+    "cat": "credito"
+  },
+  {
+    "id": "bacen_credito_pf_modalidade_prazo",
+    "name": "bacen_credito_pf_modalidade_prazo.csv.gz",
+    "desc": "Relatório 11 do IFData: Carteira de Crédito Ativa Pessoa Física — modalidade e prazo de vencimento",
+    "freq": "Trimestral",
+    "fonte": "BACEN",
+    "cat": "credito"
+  },
+  {
+    "id": "bacen_credito_pj_cnae",
+    "name": "bacen_credito_pj_cnae.csv.gz",
+    "desc": "Relatório 12 do IFData: Carteira de Crédito Ativa Pessoa Jurídica — por atividade econômica (CNAE)",
+    "freq": "Trimestral",
+    "fonte": "BACEN",
+    "cat": "credito"
+  },
+  {
+    "id": "bacen_credito_pj_modalidade_prazo",
+    "name": "bacen_credito_pj_modalidade_prazo.csv.gz",
+    "desc": "Relatório 13 do IFData: Carteira de Crédito Ativa Pessoa Jurídica — modalidade e prazo de vencimento",
+    "freq": "Trimestral",
+    "fonte": "BACEN",
+    "cat": "credito"
+  },
+  {
+    "id": "bacen_credito_pj_porte",
+    "name": "bacen_credito_pj_porte.csv.gz",
+    "desc": "Relatório 14 do IFData: Carteira de Crédito Ativa Pessoa Jurídica — por porte do tomador",
+    "freq": "Trimestral",
+    "fonte": "BACEN",
+    "cat": "credito"
+  },
+  {
+    "id": "bacen_cambio_trimestre",
+    "name": "bacen_cambio_trimestre.csv.gz",
+    "desc": "Relatório 15 do IFData: Movimentação de Câmbio no Trimestre (mercado primário e interbancário)",
+    "freq": "Trimestral",
+    "fonte": "BACEN",
+    "cat": "cambio"
+  },
+  {
+    "id": "bacen_credito_instrumentos_financeiros",
+    "name": "bacen_credito_instrumentos_financeiros.csv.gz",
+    "desc": "Relatório 16 do IFData: Carteira de Crédito Ativa — por carteiras de instrumentos financeiros (Res. CMN 4.966)",
+    "freq": "Trimestral",
+    "fonte": "BACEN",
+    "cat": "credito"
   },
   {
     "id": "derivadas_market_share",
