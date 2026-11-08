@@ -1,3 +1,4 @@
+import re
 import sys
 from pathlib import Path
 
@@ -5,6 +6,10 @@ import pandas as pd
 import polars as pl
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from scrapers.bacen_ifdata_cadastro import (
+    BacenIfdataCadastroScraper,
+    normalizar_df_cadastro,
+)
 from scrapers.utils.rest_cadastro import (
     baixar_cadastro_unico_mais_recente,
     baixar_cadastro_completo,
@@ -16,6 +21,31 @@ from scripts.utils.ux import print_done, print_warn, section
 log = get_logger("enriquecer_cadastro")
 
 COLUNAS_SAIDA = ["CodInst", "NomeInstituicao", "Segmento", "UF", "AnoMes"]
+
+
+def carregar_cadastro_odata_raw(raw_dir: Path) -> pd.DataFrame:
+    arquivos = sorted(raw_dir.glob("ifdata_cadastro_*.parquet"), reverse=True)
+    if not arquivos:
+        return pd.DataFrame()
+
+    frames = []
+    for fpath in arquivos:
+        try:
+            m = re.search(r"ifdata_cadastro_(\d{6})\.parquet$", fpath.name)
+            periodo = m.group(1) if m else None
+            df_p = pd.read_parquet(fpath)
+            if not df_p.empty:
+                frames.append(normalizar_df_cadastro(df_p, periodo=periodo))
+        except Exception as e:
+            log.warning(f"Erro ao ler checkpoint {fpath.name}: {e}")
+
+    if not frames:
+        return pd.DataFrame()
+
+    df_all = pd.concat(frames, ignore_index=True).drop_duplicates(
+        subset=["CodInst", "AnoMes"], keep="first"
+    )
+    return df_all
 
 
 def extrair_codinst_de_valores(raw_dir: Path) -> pd.DataFrame:
@@ -64,33 +94,50 @@ def preencher_faltantes(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def enriquecer(raw_dir: Path, output_path: Path | None = None) -> pd.DataFrame:
-    section("Enriquecimento de Cadastro — REST API + Fallback")
+    section("Enriquecimento de Cadastro — OData + REST API + Fallback")
 
-    df = extrair_codinst_de_valores(raw_dir)
-    if df.empty:
-        log.error("Nenhum dado de cadastro disponível")
-        return df
+    df_odata = carregar_cadastro_odata_raw(raw_dir)
+    if df_odata.empty:
+        log.info("Nenhum checkpoint OData encontrado em data/raw — executando scraper de cadastro OData")
+        try:
+            df_odata = BacenIfdataCadastroScraper().fetch()
+        except Exception as e:
+            log.warning(f"Falha ao buscar cadastro via OData: {e}")
 
-    log.info(f"Fallback inicial: {len(df)} CodInst extraídos de dados financeiros")
+    if df_odata is not None and not df_odata.empty:
+        df = df_odata
+        print_done(
+            f"Cadastro OData consolidado: {len(df)} registros "
+            f"({df['CodInst'].nunique()} IFs únicas, "
+            f"{df['AnoMes'].nunique() if 'AnoMes' in df.columns else 0} períodos, "
+            f"{df['Segmento'].replace('', pd.NA).dropna().nunique() if 'Segmento' in df.columns else 0} segmentos)"
+        )
+    else:
+        df = extrair_codinst_de_valores(raw_dir)
+        if df.empty:
+            log.error("Nenhum dado de cadastro disponível")
+            return df
 
-    try:
-        df_cad = baixar_cadastro_unico_mais_recente()
-        if df_cad is not None and not df_cad.empty:
-            log.info(f"Cadastro REST: {df_cad['CodInst'].nunique()} IFs únicas em {df_cad.get('AnoMes','').unique()}")
-            df = aplicar_cadastro_rest(df, df_cad)
-            n_nomeadas = df["NomeInstituicao"].notna().sum()
-            log.info(f"Enriquecidas: {n_nomeadas} IFs com nome via REST")
-        else:
-            log.warning("REST API sem dados — usando fallback CodInst apenas")
-    except Exception as e:
-        log.warning(f"REST API falhou: {e} — usando fallback CodInst apenas")
+        log.info(f"Fallback inicial: {len(df)} CodInst extraídos de dados financeiros")
 
-    df = preencher_faltantes(df)
-    nomeadas = sum(1 for _ in df[df["NomeInstituicao"].str.len() > 10].iterrows())
-    print_done(
-        f"Cadastro enriquecido: {len(df)} IFs "
-        f"({nomeadas} nomeadas, {df['Segmento'].nunique() if 'Segmento' in df else 0} segmentos)"
-    )
+        try:
+            df_cad = baixar_cadastro_unico_mais_recente()
+            if df_cad is not None and not df_cad.empty:
+                log.info(f"Cadastro REST: {df_cad['CodInst'].nunique()} IFs únicas em {df_cad.get('AnoMes','').unique()}")
+                df = aplicar_cadastro_rest(df, df_cad)
+                n_nomeadas = df["NomeInstituicao"].notna().sum()
+                log.info(f"Enriquecidas: {n_nomeadas} IFs com nome via REST")
+            else:
+                log.warning("REST API sem dados — usando fallback CodInst apenas")
+        except Exception as e:
+            log.warning(f"REST API falhou: {e} — usando fallback CodInst apenas")
+
+        df = preencher_faltantes(df)
+        nomeadas = sum(1 for _ in df[df["NomeInstituicao"].str.len() > 10].iterrows())
+        print_done(
+            f"Cadastro enriquecido: {len(df)} IFs "
+            f"({nomeadas} nomeadas, {df['Segmento'].nunique() if 'Segmento' in df else 0} segmentos)"
+        )
 
     if output_path:
         output_path.parent.mkdir(parents=True, exist_ok=True)

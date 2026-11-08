@@ -16,7 +16,7 @@ ODATA_HEADERS = {
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/120.0.0.0 Safari/537.36"
     ),
-    "Accept": "application/json, text/csv, */*",
+    "Accept": "application/json;odata.metadata=minimal",
 }
 
 
@@ -46,18 +46,22 @@ def paginar_odata(
     top: int = 5000,
     max_retries: int = 3,
     retry_delay: int = 5,
+    headers: dict | None = None,
 ) -> pd.DataFrame:
     todos_registros = []
     skip = 0
+    primeira_pagina = True
+    req_headers = {**ODATA_HEADERS, **(headers or {})}
 
     while True:
         params_pag = dict(params)
-        params_pag["$top"] = top
-        params_pag["$skip"] = skip
+        if not primeira_pagina:
+            params_pag["$top"] = top
+            params_pag["$skip"] = skip
 
         for tentativa in range(1, max_retries + 1):
             try:
-                resp = session.get(url, params=params_pag, headers=ODATA_HEADERS, timeout=120)
+                resp = session.get(url, params=params_pag, headers=req_headers, timeout=120)
                 if resp.status_code == 404:
                     return pd.DataFrame()
                 if resp.status_code == 200:
@@ -90,7 +94,11 @@ def paginar_odata(
             break
 
         todos_registros.append(df_page)
-        skip += top
+        if not primeira_pagina and len(df_page) < top:
+            break
+
+        skip += len(df_page)
+        primeira_pagina = False
 
     if not todos_registros:
         return pd.DataFrame()
@@ -106,6 +114,7 @@ def baixar_com_checkpoint(
     top: int = 5000,
     max_retries: int = 3,
     retry_delay: int = 5,
+    headers: dict | None = None,
 ) -> pd.DataFrame | None:
     if raw_path.suffix == ".csv":
         raw_path = raw_path.with_suffix(".parquet")
@@ -122,6 +131,7 @@ def baixar_com_checkpoint(
     df = paginar_odata(
         session, url, params,
         top=top, max_retries=max_retries, retry_delay=retry_delay,
+        headers=headers,
     )
 
     if df.empty:
@@ -129,7 +139,7 @@ def baixar_com_checkpoint(
 
     raw_path.parent.mkdir(parents=True, exist_ok=True)
     # Converte para string para manter compatibilidade com o formato de texto original
-    df = df.astype(str)
+    df = df.fillna("").astype(str).replace({"None": "", "nan": "", "<NA>": ""})
     df.to_parquet(raw_path, index=False)
     log.info(f"Checkpoint salvo: {raw_path.name} ({len(df)} linhas)")
     return df

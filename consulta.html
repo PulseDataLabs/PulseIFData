@@ -329,7 +329,8 @@
       <label>Dataset</label>
       <select id="filtro-dataset">
         <option value="historico">Série Histórica (balanço + indicadores) [~22 MB]</option>
-        <option value="cadastro">Cadastro de IFs [~40 KB]</option>
+        <option value="passivo">Passivo IFData — Relatório 3 (Trimestral) [~33 MB]</option>
+        <option value="cadastro">Cadastro de IFs [~50 MB]</option>
         <option value="conglomerados">Conglomerados Financeiros (Mensal) [~180 KB]</option>
         <option value="balancetes">Balancetes de Bancos COSIF (Mensal) [~7.0 MB]</option>
         <option value="basileia">Parcelas de Capital Basileia (Trimestral) [~9.2 MB]</option>
@@ -397,6 +398,7 @@ const BASE = window.location.hostname === 'localhost' || window.location.hostnam
   : 'https://raw.githubusercontent.com/PulseDataLabs/PulseIFData/main/';
 const DATASETS = {
   'historico':     { url: BASE + 'data/processed/ifdata_historical_lite.csv', label: 'Série Histórica' },
+  'passivo':       { url: BASE + 'data/bacen_passivo.csv.gz', label: 'Passivo IFData (Relatório 3)' },
   'cadastro':      { url: BASE + 'data/cadastro_ifs.csv', label: 'Cadastro IFs' },
   'conglomerados': { url: BASE + 'data/bacen_conglomerados.csv', label: 'Conglomerados Financeiros' },
   'balancetes':    { url: BASE + 'data/bacen_balancetes_bancos.csv', label: 'Balancetes COSIF' },
@@ -451,9 +453,15 @@ function getColDefs(key) {
       { data: 'nim_margem_financeira', title: 'NIM', render: v => v ? (parseFloat(v)*100).toFixed(2)+'%' : '-' },
     ],
     'cadastro': [
+      { data: 'AnoMes', title: 'Período' },
       { data: 'CodInst', title: 'Código' },
       { data: 'NomeInstituicao', title: 'Instituição' },
       { data: 'Segmento', title: 'Segmento' },
+      { data: 'SegmentoTb', title: 'Tipo' },
+      { data: 'UF', title: 'UF' },
+      { data: 'Municipio', title: 'Município' },
+      { data: 'Conglomerado', title: 'Conglomerado' },
+      { data: 'Situacao', title: 'Situação' },
     ],
     'conglomerados': [
       { data: 'data_referencia', title: 'Ref' },
@@ -489,6 +497,22 @@ function getColDefs(key) {
           if (n > 0 && n < 1.5) {
             return (n * 100).toFixed(2) + '%';
           }
+          return n.toLocaleString('pt-BR', {maximumFractionDigits: 2});
+        }
+      }
+    ],
+    'passivo': [
+      { data: 'AnoMes', title: 'Período' },
+      { data: 'CodInst', title: 'Código' },
+      { data: 'tipo_instituicao_label', title: 'Tipo Inst.' },
+      { data: 'Grupo', title: 'Grupo' },
+      { data: 'Conta', title: 'Conta' },
+      { data: 'NomeColuna', title: 'Coluna' },
+      { data: 'DescricaoColuna', title: 'Descrição' },
+      { data: 'Saldo', title: 'Saldo (R$)', render: v => {
+          if (!v) return '-';
+          const n = parseFloat(v);
+          if (isNaN(n)) return v;
           return n.toLocaleString('pt-BR', {maximumFractionDigits: 2});
         }
       }

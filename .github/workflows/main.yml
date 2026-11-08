@@ -56,8 +56,8 @@ jobs:
 
       - name: Normalizar e enriquecer
         run: |
-          python run_all.py --normalize-only || true
           python scripts/enriquecer_cadastro.py || true
+          python run_all.py --normalize-only || true
         continue-on-error: true
 
       - name: Métricas derivadas e catálogo

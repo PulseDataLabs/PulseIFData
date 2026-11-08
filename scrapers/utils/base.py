@@ -83,8 +83,8 @@ class BaseScraper:
                         r'^(\d{2})/(\d{2})/(\d{2})$', r'20\3-\2-\1', regex=True
                     )
                     
-                # YYYYMMDD
-                mask_date3 = s_str.str.match(r'^\d{8}$')
+                # YYYYMMDD (apenas datas válidas nos séculos 20/21)
+                mask_date3 = s_str.str.match(r'^(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])$')
                 if mask_date3.any():
                     result.loc[mask_date3] = s_str.loc[mask_date3].str.replace(
                         r'^(\d{4})(\d{2})(\d{2})$', r'\1-\2-\3', regex=True

@@ -16,6 +16,14 @@ window.PULSEIFDATA_DATASETS = [
     "cat": "balanco"
   },
   {
+    "id": "bacen_passivo",
+    "name": "bacen_passivo.csv.gz",
+    "desc": "Relatório 3 (Passivo) do IFData: depósitos, captações, obrigações e patrimônio líquido por IF/trimestre",
+    "freq": "Trimestral",
+    "fonte": "BACEN",
+    "cat": "balanco"
+  },
+  {
     "id": "derivadas_market_share",
     "name": "derivadas_market_share.csv.gz",
     "desc": "Participação de mercado por IF em cada trimestre (%)",

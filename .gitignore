@@ -65,6 +65,7 @@ data/schemas.json
 data/last_updates.*
 data/raw/ifdata_rel*.csv
 data/raw/ifdata_rel*.parquet
+data/raw/ifdata_cadastro_*.parquet
 data/processed/ifdata_historical.csv*
 data/derivadas_*.csv
 

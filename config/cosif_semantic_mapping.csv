@@ -34,3 +34,24 @@ conta_cosif,campo_semantico,relatorio,nome_coluna
 138232,rwa_risco_credito,5,RWA para Risco de Crédito
 79656,rwa_risco_operacional,5,RWA para Risco Operacional
 79651,rwa_risco_mercado,5,RWA para Risco de Mercado
+140220,ativo_total,1|2|4,Ativo Total
+141873,carteira_credito,1,Carteira de Crédito
+140244,passivo_exigivel,1|3,Passivo Exigível
+140239,captacoes,1|3,Captações
+140246,patrimonio_liquido,1|3,Patrimônio Líquido
+141870,lucro_liquido,1|4,Lucro Líquido
+140198,disponibilidades,2,Disponibilidades
+140199,aplicacoes_interfinanceiras,2,Aplicações Interfinanceiras de Liquidez
+140200,tvm_derivativos,1|2,Títulos e Valores Mobiliários
+140218,outros_ativos_realizaveis,2,Outros Ativos Realizáveis
+140219,permanente_ajustado,2,Ativo Permanente
+140230,obrigacoes_compromissadas,3,Obrigações por Operações Compromissadas
+140238,obrigacoes_emprestimos_repasses,3,Obrigações por Empréstimos e Repasses
+140241,instrumentos_derivativos_passivo,3,Instrumentos Derivativos
+140242,outras_obrigacoes,3,Outras Obrigações
+140247,passivo_total,3,Passivo Total
+141857,receita_servicos,4,Outras Rendas de Prestação de Serviços
+141851,resultado_operacional,4,Resultado de Intermediação Financeira
+141867,resultado_antes_tributacao,4,Resultado antes da Tributação e Participações
+141868,ir_cs,4,Imposto de Renda e Contribuição Social
+141869,participacao_lucros,4,Participações no Lucro

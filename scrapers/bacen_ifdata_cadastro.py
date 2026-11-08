@@ -26,6 +26,49 @@ def _carregar_settings() -> dict:
         return yaml.safe_load(f)
 
 
+def normalizar_df_cadastro(df: pd.DataFrame, periodo: str | int | None = None) -> pd.DataFrame:
+    df = df.copy()
+    df = df.fillna("").astype(str).replace({"None": "", "nan": "", "<NA>": ""})
+
+    if "Uf" in df.columns and "UF" not in df.columns:
+        df = df.rename(columns={"Uf": "UF"})
+
+    sr = df["Sr"].str.strip() if "Sr" in df.columns else pd.Series("", index=df.index)
+    seg_tb = (
+        df["SegmentoTb"].str.strip()
+        if "SegmentoTb" in df.columns
+        else (df["Segmento"].str.strip() if "Segmento" in df.columns else pd.Series("", index=df.index))
+    )
+    if "SegmentoTb" not in df.columns and "Segmento" in df.columns:
+        df["SegmentoTb"] = seg_tb
+    df["Segmento"] = sr.where(sr != "", seg_tb)
+
+    if "Municipio" in df.columns and "Cidade" not in df.columns:
+        df["Cidade"] = df["Municipio"]
+    elif "Cidade" in df.columns and "Municipio" not in df.columns:
+        df["Municipio"] = df["Cidade"]
+
+    if "Conglomerado" not in df.columns:
+        congl_prud = (
+            df["CodConglomeradoPrudencial"].str.strip()
+            if "CodConglomeradoPrudencial" in df.columns
+            else pd.Series("", index=df.index)
+        )
+        congl_fin = (
+            df["CodConglomeradoFinanceiro"].str.strip()
+            if "CodConglomeradoFinanceiro" in df.columns
+            else pd.Series("", index=df.index)
+        )
+        df["Conglomerado"] = congl_prud.where(congl_prud != "", congl_fin)
+
+    if periodo is not None:
+        df["AnoMes"] = str(periodo)
+    elif "AnoMes" not in df.columns and "Data" in df.columns:
+        df["AnoMes"] = df["Data"].str.strip()
+
+    return df
+
+
 def _extrair_instituicoes_de_valores(raw_dir: Path) -> pd.DataFrame:
     log.info("Fallback: extraindo CodInst de dados financeiros existentes")
     codinsts: set[str] = set()
@@ -108,32 +151,29 @@ class BacenIfdataCadastroScraper(BaseScraper):
             df = baixar_com_checkpoint(
                 session, url, params, raw_path,
                 top=top, max_retries=max_retries, retry_delay=retry_delay,
+                headers={"Accept": "application/json;odata.metadata=minimal"},
             )
 
             if df is not None and not df.empty:
-                # A versão atual da API usa nomes distintos dos adotados
-                # historicamente pelo pipeline.
-                df.rename(
-                    columns={
-                        "SegmentoTb": "Segmento",
-                        "Uf": "UF",
-                        "Municipio": "Cidade",
-                    },
-                    inplace=True,
-                )
-                df["AnoMes"] = str(periodo)
+                df = normalizar_df_cadastro(df, periodo=periodo)
                 frames_cadastro.append(df)
                 elapsed = time.time() - t0
                 print_done(f"Cadastro OData {periodo}: {len(df)} IFs", elapsed=elapsed)
                 cadastro_ok = True
             else:
-                print_warn(f"Cadastro OData {periodo}: sem dados (HTTP 500)")
+                print_warn(f"Cadastro OData {periodo}: sem dados")
 
         if frames_cadastro:
             df_cadastro = pd.concat(frames_cadastro, ignore_index=True).drop_duplicates(
-                subset=["CodInst"], keep="first"
+                subset=["CodInst", "AnoMes"], keep="first"
             )
-            log.info(f"Cadastro OData consolidado: {len(df_cadastro)} IFs únicas")
+            cadastro_ifs_path = self.raw_dir.parent / "cadastro_ifs.csv"
+            df_cadastro.to_csv(cadastro_ifs_path, index=False, encoding="utf-8")
+            log.info(
+                f"Cadastro OData consolidado: {len(df_cadastro)} registros "
+                f"({df_cadastro['CodInst'].nunique()} IFs únicas em "
+                f"{df_cadastro['AnoMes'].nunique()} períodos) → {cadastro_ifs_path}"
+            )
             return df_cadastro
 
         log.warning("IfDataCadastro OData indisponível — tentando REST API")
@@ -153,3 +193,7 @@ class BacenIfdataCadastroScraper(BaseScraper):
         log.warning("REST API indisponível — usando fallback CodInst")
         df_fallback = _extrair_instituicoes_de_valores(self.raw_dir)
         return df_fallback
+
+
+if __name__ == "__main__":
+    BacenIfdataCadastroScraper().run()

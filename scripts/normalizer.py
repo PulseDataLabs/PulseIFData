@@ -126,38 +126,55 @@ def _join_cadastro_pl(
         log.warning(f"Cadastro não encontrado: {cadastro_path} — pulando join")
         return df
 
-    df_cad = pl.read_csv(cadastro_path, schema_overrides={"CodInst": pl.String})
+    df_cad = pl.read_csv(
+        cadastro_path,
+        schema_overrides={"CodInst": pl.String, "AnoMes": pl.String},
+        infer_schema_length=10000,
+    )
     if df_cad.is_empty():
         return df
 
+    existing_cols = set(df_cad.columns)
     rename_map = {}
+
+    def _try_map(col: str, target: str) -> None:
+        if col == target:
+            return
+        if target not in existing_cols and target not in rename_map.values():
+            rename_map[col] = target
+
     for col in df_cad.columns:
         col_lower = col.lower()
         if "codinst" in col_lower or "cod_inst" in col_lower:
-            rename_map[col] = "CodInst"
+            _try_map(col, "CodInst")
         elif "nomeinst" in col_lower or "nome_inst" in col_lower:
-            rename_map[col] = "NomeInstituicao"
-        elif "segmento" in col_lower:
-            rename_map[col] = "Segmento"
-        elif "uf" in col_lower:
-            rename_map[col] = "UF"
-        elif "municipio" in col_lower:
-            rename_map[col] = "Municipio"
-        elif "conglomerado" in col_lower:
-            rename_map[col] = "Conglomerado"
+            _try_map(col, "NomeInstituicao")
+        elif col_lower == "segmento" or "segmento" in col_lower:
+            _try_map(col, "Segmento")
+        elif col_lower == "uf":
+            _try_map(col, "UF")
+        elif "municipio" in col_lower or col_lower == "cidade":
+            _try_map(col, "Municipio")
+        elif col_lower == "conglomerado" or "conglomerado" in col_lower:
+            _try_map(col, "Conglomerado")
 
-    df_cad = df_cad.rename(rename_map)
+    if rename_map:
+        df_cad = df_cad.rename(rename_map)
+
     cad_cols = ["CodInst", "NomeInstituicao", "Segmento", "UF", "Municipio", "Conglomerado"]
     if "AnoMes" in df_cad.columns and modo == "estrito":
         cad_cols.append("AnoMes")
 
     cad_cols = [c for c in cad_cols if c in df_cad.columns]
-    df_cad = df_cad.select(cad_cols).unique()
+    df_cad = df_cad.select(cad_cols)
 
     if modo == "estrito" and "AnoMes" in df_cad.columns:
-        df_merged = df.join(df_cad, on=["CodInst", "AnoMes"], how="left")
+        df_cad_period = df_cad.unique(subset=["CodInst", "AnoMes"], keep="first")
+        df_merged = df.join(df_cad_period, on=["CodInst", "AnoMes"], how="left")
     else:
-        df_cad_unique = df_cad.select([c for c in cad_cols if c != "AnoMes"]).unique(subset=["CodInst"])
+        df_cad_unique = df_cad.select([c for c in cad_cols if c != "AnoMes"]).unique(
+            subset=["CodInst"], keep="first"
+        )
         df_merged = df.join(df_cad_unique, on="CodInst", how="left")
 
     log.info(f"Join cadastro: {len(df)} → {len(df_merged)} linhas")

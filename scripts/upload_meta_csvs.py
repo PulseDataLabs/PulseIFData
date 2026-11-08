@@ -23,6 +23,7 @@ CSV_TABLES_MAPPING = {
     "data/bacen_conglomerados.csv": "BACEN_CONGLOMERADOS",
     "data/bacen_ifdata_cadastro.csv": "BACEN_IFDATA_CADASTRO",
     "data/bacen_parcelas_capital_basileia.csv": "BACEN_PARCELAS_CAPITAL_BASILEIA",
+    "data/bacen_passivo.csv.gz": "BACEN_PASSIVO",
     # Arquivos de configuração/mapeamento
     "config/cosif_de_para.csv": "COSIF_DE_PARA",
     "config/cosif_semantic_mapping.csv": "COSIF_SEMANTIC_MAPPING"
