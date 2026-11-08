@@ -77,6 +77,7 @@ PulseIFData/
 │   ├── derivadas_*.csv(.gz)    # Market share, HHI, rankings e variações QoQ/YoY
 │   ├── datasets.json           # Catálogo de datasets
 │   └── pipeline_status.json    # Status da última execução
+├── databricks/                 # Execução em Databricks Workflows + export Delta Lake (ver databricks/README.md)
 ├── .github/workflows/main.yml  # GitHub Actions (cron trimestral + Pages + Oracle DB Load)
 ├── run_all.py                  # Orquestrador do pipeline
 ├── index.html                  # Dashboard estático (GitHub Pages)
@@ -286,6 +287,14 @@ python scripts/upload_meta_csvs.py
 # Regenerar catálogo de metadados
 python run_all.py --generate-catalog
 ```
+
+## Execução no Databricks
+
+O pipeline roda em **Databricks Workflows** via Git Folder (código reutilizado sem mudanças) e pode exportar todos os datasets como tabelas **Delta / Unity Catalog** (padrão `pulsedatalabs.ifdata`). Guia completo em [`databricks/README.md`](databricks/README.md).
+
+- `databricks/run_pulseifdata_job.py`: entrypoint do Job (`--scraper-only`, `--normalize-only`, `--derivadas-only`, `--sequential`, `--skip-db`).
+- `databricks/notebooks/01_orchestrator_notebook.py`: execução interativa com widgets.
+- `databricks/notebooks/02_delta_lake_exporter.py`: exporta `data/` e `data/processed/` para Delta (`overwrite`, com `CodInst`/`Conta`/CNPJs preservados como string).
 
 ## Consumo dos dados
 
