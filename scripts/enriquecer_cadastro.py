@@ -106,6 +106,16 @@ def enriquecer(raw_dir: Path, output_path: Path | None = None) -> pd.DataFrame:
 
     if df_odata is not None and not df_odata.empty:
         df = df_odata
+        if output_path and output_path.exists():
+            import os
+            if os.getenv("REFRESH_CADASTRO") != "1":
+                try:
+                    df_exist = pd.read_csv(output_path, dtype=str).fillna("")
+                    df = pd.concat([df, df_exist], ignore_index=True).drop_duplicates(
+                        subset=["CodInst", "AnoMes"], keep="first"
+                    )
+                except Exception as e:
+                    log.warning(f"Não foi possível mesclar com {output_path.name} existente: {e}")
         print_done(
             f"Cadastro OData consolidado: {len(df)} registros "
             f"({df['CodInst'].nunique()} IFs únicas, "

@@ -189,9 +189,59 @@ class IfdataRelatorioBaseScraper(BaseScraper):
         self.raw_dir.mkdir(parents=True, exist_ok=True)
         self.log = get_logger(self.name)
 
+    def _manter_arquivo_existente(self, df_pl: pl.DataFrame) -> bool:
+        """
+        Compara o consolidado novo com o arquivo já publicado.
+
+        - Levanta erro se o novo consolidado for menor/mais curto que o atual
+          (ex.: checkpoints parciais em CI), evitando sobrescrever a série
+          completa. Use IFDATA_ALLOW_SHRINK=1 para reconstruções intencionais.
+        - Retorna True (e não reescreve) se o conteúdo é idêntico, ignorando
+          `data_captura`, para não gerar commits/diffs sem mudança real.
+        """
+        if not self.output_file.exists():
+            return False
+        try:
+            atual = pl.read_csv(self.output_file, infer_schema_length=0)
+        except Exception as e:
+            self.log.warning(f"Não foi possível ler {self.output_file.name} existente: {e}")
+            return False
+
+        if os.getenv("IFDATA_ALLOW_SHRINK") != "1" and not atual.is_empty():
+            min_atual = int(atual["AnoMes"].cast(pl.Int64).min())
+            min_novo = int(df_pl["AnoMes"].cast(pl.Int64).min())
+            if min_novo > min_atual:
+                raise RuntimeError(
+                    f"Consolidado do Relatório {self.relatorio_id} começa em {min_novo}, "
+                    f"mas o arquivo atual começa em {min_atual}. Sobrescrita abortada "
+                    f"(checkpoints em data/raw/ incompletos?)."
+                )
+            if len(df_pl) < 0.98 * len(atual):
+                raise RuntimeError(
+                    f"Consolidado do Relatório {self.relatorio_id} tem {len(df_pl)} linhas, "
+                    f"contra {len(atual)} no arquivo atual. Sobrescrita abortada."
+                )
+
+        cols = [c for c in df_pl.columns if c != "data_captura"]
+        if set(cols) == {c for c in atual.columns if c != "data_captura"}:
+            novo_cmp = df_pl.select(cols).cast(pl.String)
+            if novo_cmp.equals(atual.select(cols)):
+                print_skip(
+                    f"Relatório {self.relatorio_id} ({self.relatorio_nome}): sem mudanças, "
+                    f"{self.output_file.name} mantido."
+                )
+                return True
+        return False
+
     def ConsolidateParquets(self) -> None:
         arquivos = sorted(self.raw_dir.glob(f"ifdata_rel{self.relatorio_id}_*.parquet"))
         if not arquivos:
+            if self.output_file.exists():
+                print_skip(
+                    f"Relatório {self.relatorio_id} ({self.relatorio_nome}): "
+                    f"nenhum Parquet novo em data/raw/, mantendo {self.output_file.name} existente."
+                )
+                return
             raise RuntimeError(
                 f"Nenhum arquivo Parquet do Relatório {self.relatorio_id} ({self.relatorio_nome}) encontrado."
             )
@@ -203,6 +253,12 @@ class IfdataRelatorioBaseScraper(BaseScraper):
         df_pl = pl.read_parquet(arquivos)
 
         if df_pl.is_empty():
+            if self.output_file.exists():
+                print_skip(
+                    f"Relatório {self.relatorio_id} ({self.relatorio_nome}): "
+                    f"Parquets vazios, mantendo {self.output_file.name} existente."
+                )
+                return
             raise RuntimeError(f"Dados consolidados do Relatório {self.relatorio_id} estão vazios.")
 
         data_captura, _ = agora_brt()
@@ -255,6 +311,25 @@ class IfdataRelatorioBaseScraper(BaseScraper):
         cols_presentes = [c for c in cols_ordem if c in df_pl.columns]
         cols_restantes = [c for c in df_pl.columns if c not in cols_ordem]
         final_cols = cols_presentes + cols_restantes
+        df_pl = df_pl.select(final_cols).cast(pl.String)
+
+        # Se já existe um consolidado publicado e não estamos forçando refresh total,
+        # fazemos merge incremental para nunca perder histórico quando data/raw/ for parcial.
+        force_refresh = os.getenv("REFRESH_IFDATA_REL") == "1" or (
+            self.relatorio_id == "3" and os.getenv("REFRESH_PASSIVO") == "1"
+        )
+        if self.output_file.exists() and not force_refresh:
+            try:
+                atual = pl.read_csv(self.output_file, infer_schema_length=0)
+                if not atual.is_empty():
+                    cols_comuns = [c for c in final_cols if c in atual.columns]
+                    df_pl = pl.concat(
+                        [df_pl.select(cols_comuns), atual.select(cols_comuns).cast(pl.String)],
+                        how="vertical",
+                    )
+                    final_cols = cols_comuns
+            except Exception as e:
+                self.log.warning(f"Não foi possível mesclar com {self.output_file.name} existente: {e}")
 
         df_pl = (
             df_pl.select(final_cols)
@@ -262,8 +337,13 @@ class IfdataRelatorioBaseScraper(BaseScraper):
             .sort(["AnoMes", "TipoInstituicao", "CodInst", "Conta"], descending=[True, False, False, False])
         )
 
+        if self._manter_arquivo_existente(df_pl):
+            return
+
         self.output_file.parent.mkdir(parents=True, exist_ok=True)
-        with gzip.open(self.output_file, "wb") as gz_out:
+        with open(self.output_file, "wb") as raw_out, gzip.GzipFile(
+            filename="", mode="wb", fileobj=raw_out, mtime=0
+        ) as gz_out:
             df_pl.write_csv(gz_out)
 
         min_per = df_pl["AnoMes"].min() if "AnoMes" in df_pl.columns else ""
@@ -302,7 +382,7 @@ class IfdataRelatorioBaseScraper(BaseScraper):
         quarters = time_range.get("quarters", [3, 6, 9, 12])
 
         existing_parquets = list(self.raw_dir.glob(f"ifdata_rel{self.relatorio_id}_*.parquet"))
-        if os.getenv("SCRAPE_LATEST_ONLY") == "1" and existing_parquets:
+        if os.getenv("SCRAPE_LATEST_ONLY") == "1" and (existing_parquets or self.output_file.exists()):
             self.log.info(f"Modo SCRAPE_LATEST_ONLY ativo para Relatório {self.relatorio_id}.")
             start_year = date.today().year - 1
             start_month = 1

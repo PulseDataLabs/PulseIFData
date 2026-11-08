@@ -192,14 +192,47 @@ def normalizar(
 
     # Busca arquivos Parquet gerados
     raw_files = sorted(raw_dir.glob("ifdata_rel*.parquet"))
+    data_dir = raw_dir.parent
+    rel_csv_files = [
+        data_dir / name
+        for name in (
+            "bacen_resumo.csv.gz",
+            "bacen_ativo.csv.gz",
+            "bacen_passivo.csv.gz",
+            "bacen_dre.csv.gz",
+            "bacen_informacoes_capital.csv.gz",
+            "bacen_segmentacao.csv.gz",
+            "bacen_credito_nivel_risco.csv.gz",
+        )
+        if (data_dir / name).exists()
+    ]
 
-    if not raw_files:
-        log.warning(f"Nenhum arquivo bruto Parquet em {raw_dir}")
-        log.info("Execute a extração primeiro: python run_all.py --scraper-only")
-        return pd.DataFrame()
-
-    log.info(f"Lendo {len(raw_files)} arquivos brutos Parquet...")
-    df_raw = pl.read_parquet(raw_files)
+    # Se data/raw/ estiver vazio ou parcial (ex.: execução incremental em CI com cache frio),
+    # usa os CSV.GZs consolidados como base e mescla eventuais Parquets novos.
+    cols_necessarias = ["AnoMes", "CodInst", "TipoInstituicao", "Conta", "NomeColuna", "Saldo"]
+    if len(raw_files) >= 400 or not rel_csv_files:
+        if not raw_files:
+            log.warning(f"Nenhum arquivo bruto Parquet em {raw_dir}")
+            log.info("Execute a extração primeiro: python run_all.py --scraper-only")
+            return pd.DataFrame()
+        log.info(f"Lendo {len(raw_files)} arquivos brutos Parquet...")
+        df_raw = pl.read_parquet(raw_files)
+    else:
+        log.info(
+            f"Checkpoint parcial em {raw_dir} ({len(raw_files)} Parquets) — "
+            f"lendo histórico consolidado de {len(rel_csv_files)} arquivos bacen_*.csv.gz..."
+        )
+        frames = [
+            pl.read_csv(f, columns=cols_necessarias, infer_schema_length=0)
+            for f in rel_csv_files
+        ]
+        if raw_files:
+            df_pq = pl.read_parquet(raw_files)
+            cols_pq = [c for c in cols_necessarias if c in df_pq.columns]
+            frames.insert(0, df_pq.select(cols_pq).cast(pl.String))
+        df_raw = pl.concat(frames, how="vertical").unique(
+            subset=["AnoMes", "CodInst", "TipoInstituicao", "Conta"], keep="first"
+        )
 
     if df_raw.is_empty():
         log.error("Nenhum dado para processar.")
@@ -248,7 +281,9 @@ def normalizar(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     if str(output_path).endswith(".gz"):
         import gzip
-        with gzip.open(output_path, "wb") as f:
+        with open(output_path, "wb") as raw_out, gzip.GzipFile(
+            filename="", mode="wb", fileobj=raw_out, mtime=0
+        ) as f:
             df_final.write_csv(f)
     else:
         df_final.write_csv(output_path)

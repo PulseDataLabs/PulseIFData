@@ -124,10 +124,16 @@ class BacenIfdataCadastroScraper(BaseScraper):
         retry_delay = extr.get("pagination", {}).get("retry_delay", 5)
         start_year = time_range.get("start_year", 2014)
         quarters = time_range.get("quarters", [3, 6, 9, 12])
-        # `gerar_periodos` já ordena do mais recente para o mais antigo.
-        # Mantemos todos os períodos para reconstruir o histórico do cadastro.
-        periodos = gerar_periodos(start_year, quarters[0], quarters)
         force_refresh = os.getenv("REFRESH_CADASTRO") == "1"
+        cadastro_ifs_path = self.raw_dir.parent / "cadastro_ifs.csv"
+        existing_ckpts = list(self.raw_dir.glob("ifdata_cadastro_*.parquet"))
+        if os.getenv("SCRAPE_LATEST_ONLY") == "1" and not force_refresh and (existing_ckpts or cadastro_ifs_path.exists()):
+            from datetime import date
+            log.info("Modo SCRAPE_LATEST_ONLY ativo para Cadastro IFData.")
+            start_year = date.today().year - 1
+
+        # `gerar_periodos` já ordena do mais recente para o mais antigo.
+        periodos = gerar_periodos(start_year, quarters[0], quarters)
 
         section("Cadastro IFData — OData + REST + Fallback")
         log.info(
@@ -164,10 +170,16 @@ class BacenIfdataCadastroScraper(BaseScraper):
                 print_warn(f"Cadastro OData {periodo}: sem dados")
 
         if frames_cadastro:
-            df_cadastro = pd.concat(frames_cadastro, ignore_index=True).drop_duplicates(
+            df_cadastro = pd.concat(frames_cadastro, ignore_index=True)
+            if cadastro_ifs_path.exists() and not force_refresh:
+                try:
+                    df_exist = pd.read_csv(cadastro_ifs_path, dtype=str).fillna("")
+                    df_cadastro = pd.concat([df_cadastro, df_exist], ignore_index=True)
+                except Exception as e:
+                    log.warning(f"Não foi possível mesclar com {cadastro_ifs_path.name} existente: {e}")
+            df_cadastro = df_cadastro.drop_duplicates(
                 subset=["CodInst", "AnoMes"], keep="first"
             )
-            cadastro_ifs_path = self.raw_dir.parent / "cadastro_ifs.csv"
             df_cadastro.to_csv(cadastro_ifs_path, index=False, encoding="utf-8")
             log.info(
                 f"Cadastro OData consolidado: {len(df_cadastro)} registros "

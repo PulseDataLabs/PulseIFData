@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '0 10 * * 1-5'
   workflow_dispatch:
+    inputs:
+      refresh_all:
+        description: 'Recoletar todos os checkpoints (REFRESH_IFDATA_REL=1)'
+        type: boolean
+        default: false
 
 concurrency:
   group: pipeline-${{ github.ref }}
@@ -12,21 +17,18 @@ concurrency:
 jobs:
   pipeline:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    timeout-minutes: 300
     permissions:
       contents: write
-      pages: write
-      id-token: write
+
+    outputs:
+      alterado: ${{ steps.commit.outputs.alterado }}
 
     env:
-      ORACLE_DB_USER: ${{ secrets.ORACLE_DB_USER }}
-      ORACLE_DB_PASSWORD: ${{ secrets.ORACLE_DB_PASSWORD }}
-      ORACLE_DB_DSN: ${{ secrets.ORACLE_DB_DSN }}
-      ORACLE_DB_WALLET_DIR: ${{ github.workspace }}/wallet
-      ORACLE_DB_WALLET_PASSWORD: ${{ secrets.ORACLE_DB_WALLET_PASSWORD }}
+      # Etapas do pipeline NÃO escrevem no Oracle; a carga é um passo próprio ao final.
+      SKIP_ORACLE_DB: "1"
       SCRAPE_LATEST_ONLY: "1"
+      REFRESH_IFDATA_REL: ${{ inputs.refresh_all && '1' || '' }}
 
     steps:
       - uses: actions/checkout@v6
@@ -40,61 +42,101 @@ jobs:
 
       - run: pip install -r requirements.txt
 
+      # data/raw/ está no .gitignore: sem cache, cada execução recoletaria a série inteira
+      # e a normalização perderia o histórico. O cache preserva os checkpoints Parquet.
+      - name: Restaurar checkpoints (data/raw)
+        uses: actions/cache/restore@v4
+        with:
+          path: data/raw
+          key: ifdata-raw-${{ github.run_id }}
+          restore-keys: |
+            ifdata-raw-
+
+      # Falhas reais derrubam o job (sem "|| true"). O cache é salvo mesmo assim
+      # (passo "Salvar checkpoints"), então uma coleta longa que estoura o tempo
+      # continua de onde parou na próxima execução.
+      - name: Extrair dados IFData
+        run: python run_all.py --scraper-only --sequential
+
+      - name: Salvar checkpoints (data/raw)
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/raw
+          key: ifdata-raw-${{ github.run_id }}
+
+      - name: Normalizar e enriquecer
+        run: |
+          python scripts/enriquecer_cadastro.py
+          python run_all.py --normalize-only
+
+      - name: Métricas derivadas e catálogo
+        run: |
+          python run_all.py --derivadas-only
+          python run_all.py --generate-catalog
+
+      - name: Commitar dados atualizados
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/ config/
+          # Ignora mudanças apenas em pipeline_status.* (que têm timestamp da execução)
+          if git diff --cached --quiet -- ':!data/pipeline_status.*'; then
+            git reset --quiet
+            git checkout -- data/pipeline_status.* 2>/dev/null || true
+            echo "Sem mudanças nos datasets — nada a commitar."
+            echo "alterado=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "Bot: Atualizacao IFData - $(date +'%Y-%m-%d')"
+            git push origin main
+            echo "alterado=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Oracle é um destino externo: sua falha não deve impedir a publicação dos dados,
+      # mas fica visível como aviso no resumo do job.
       - name: Configurar Wallet do Oracle Cloud
         env:
           WALLET_BASE64: ${{ secrets.ORACLE_DB_WALLET_BASE64 }}
+        if: ${{ env.WALLET_BASE64 != '' && steps.commit.outputs.alterado == 'true' }}
         run: |
           mkdir -p ${{ github.workspace }}/wallet
           echo "$WALLET_BASE64" | base64 -d > ${{ github.workspace }}/wallet.zip
           unzip -o ${{ github.workspace }}/wallet.zip -d ${{ github.workspace }}/wallet
-        if: "${{ env.WALLET_BASE64 != '' }}"
 
-      - name: Extrair dados IFData
-        run: python run_all.py --scraper-only --sequential
+      - name: Carga no Oracle DB
+        if: steps.commit.outputs.alterado == 'true'
         continue-on-error: true
-        timeout-minutes: 120
+        env:
+          SKIP_ORACLE_DB: ""
+          ORACLE_DB_USER: ${{ secrets.ORACLE_DB_USER }}
+          ORACLE_DB_PASSWORD: ${{ secrets.ORACLE_DB_PASSWORD }}
+          ORACLE_DB_DSN: ${{ secrets.ORACLE_DB_DSN }}
+          ORACLE_DB_WALLET_DIR: ${{ github.workspace }}/wallet
+          ORACLE_DB_WALLET_PASSWORD: ${{ secrets.ORACLE_DB_WALLET_PASSWORD }}
+        run: python scripts/upload_meta_csvs.py
 
-      - name: Normalizar e enriquecer
-        run: |
-          python scripts/enriquecer_cadastro.py || true
-          python run_all.py --normalize-only || true
-        continue-on-error: true
+  pages:
+    # Só republica o site quando os dados mudaram.
+    needs: pipeline
+    if: needs.pipeline.outputs.alterado == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
 
-      - name: Métricas derivadas e catálogo
-        run: |
-          python run_all.py --derivadas-only || true
-          python run_all.py --generate-catalog || true
-        continue-on-error: true
+      - uses: actions/configure-pages@v5
 
-      - name: Upload de Metadados e CSVs Auxiliares
-        run: python scripts/upload_meta_csvs.py || true
-        continue-on-error: true
-
-      - name: Gerar pipeline_status.js para o dashboard
-        run: python run_all.py || true
-
-      - name: Configurar git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Commitar dados atualizados
-        run: |
-          git add data/ config/
-          git diff --cached --quiet || \
-            git commit -m "Bot: Atualizacao IFData - $(date +'%Y-%m-%d')"
-
-      - name: Push
-        run: git push origin main
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
 
-      - name: Deploy to Pages
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4

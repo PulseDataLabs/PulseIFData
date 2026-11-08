@@ -4,6 +4,7 @@
 Faz o upload dos arquivos CSV auxiliares e de configuração para o Oracle Database.
 """
 
+import os
 import sys
 from pathlib import Path
 import pandas as pd
@@ -46,6 +47,10 @@ CSV_TABLES_MAPPING = {
 
 def upload_all_csvs():
     banner("Upload de CSVs Auxiliares e Configurações")
+
+    if os.getenv("SKIP_ORACLE_DB"):
+        log.info("Upload ao Oracle desativado via SKIP_ORACLE_DB.")
+        return
     
     root_dir = Path(__file__).resolve().parents[1]
     

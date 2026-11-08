@@ -71,9 +71,12 @@ import run_all  # noqa: E402
 etapa = dbutils.widgets.get("etapa")  # noqa: F821
 sequential = dbutils.widgets.get("mode") == "sequential"  # noqa: F821
 
-run_all.main(
+ok = run_all.main(
     scraper_only=etapa == "extracao",
     normalize_only=etapa == "normalizacao",
     derivadas_only=etapa == "derivadas",
     sequential=sequential,
 )
+
+if not ok:
+    raise RuntimeError("Pipeline concluído com falhas — veja os logs acima.")

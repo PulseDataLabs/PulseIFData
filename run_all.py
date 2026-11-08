@@ -16,6 +16,7 @@ import argparse
 import importlib
 import json
 import logging
+import os
 import sys
 import traceback
 import time
@@ -188,9 +189,12 @@ def main(
     normalize_only: bool = False,
     derivadas_only: bool = False,
     sequential: bool = False,
-) -> None:
+) -> bool:
+    """Executa o pipeline. Retorna False se alguma etapa falhou (usado como exit code)."""
+    pipeline_ok = True
     _banner()
 
+    fail_extracao = False
     if not normalize_only and not derivadas_only:
         t0 = time.time()
         registry = discover_scrapers()
@@ -245,11 +249,15 @@ def main(
 
         ok = sum(1 for r in results.values() if r[0])
         fail = sum(1 for r in results.values() if not r[0])
+        fail_extracao = fail > 0
         print()
         print(f"  {bold('Extração')}: {b_green(f'✔ {ok} ok')}  {'│' if fail else ''}  {b_red(f'✖ {fail} erro(s)') if fail else ''}  │  {cyan(f'⏱ {total_elapsed:.1f}s')}")
 
+    if fail_extracao:
+        pipeline_ok = False
+
     if scraper_only:
-        return
+        return pipeline_ok
 
     root_dir = Path(__file__).resolve().parent
 
@@ -291,6 +299,7 @@ def main(
             gerar_lite(output_path, lite_output, anos=3)
         except Exception as e:
             logger.error(red(f"  ✖  Erro na normalização: {e}"))
+            pipeline_ok = False
 
     if not normalize_only:
         _section("Métricas Derivadas", "📊")
@@ -303,6 +312,7 @@ def main(
                 print_done(f"{len(resultados)} métricas geradas: {', '.join(resultados.keys())}")
         except Exception as e:
             logger.error(red(f"  ✖  Erro nas métricas derivadas: {e}"))
+            pipeline_ok = False
 
     _section("Catálogo", "📦")
     try:
@@ -310,9 +320,10 @@ def main(
         generate()
     except Exception as e:
         logger.error(red(f"  ✖  Erro ao gerar catálogo: {e}"))
+        pipeline_ok = False
 
     # Carga de CSVs de metadados e tabelas auxiliares para o banco Oracle
-    if not scraper_only:
+    if not scraper_only and not os.getenv("SKIP_ORACLE_DB"):
         try:
             from scripts.upload_meta_csvs import upload_all_csvs
             upload_all_csvs()
@@ -321,9 +332,13 @@ def main(
 
     print()
     print(_line("═"))
-    print(f"  {bold('Pipeline concluído')}  {green('✔')}")
+    if pipeline_ok:
+        print(f"  {bold('Pipeline concluído')}  {green('✔')}")
+    else:
+        print(f"  {bold('Pipeline concluído com falhas')}  {b_red('✖')}")
     print(_line("═"))
     print()
+    return pipeline_ok
 
 
 if __name__ == "__main__":
@@ -358,9 +373,9 @@ if __name__ == "__main__":
         print(b_green("\n  ✔  datasets.json atualizado.\n"))
         sys.exit(0)
 
-    main(
+    sys.exit(0 if main(
         scraper_only=args.scraper_only,
         normalize_only=args.normalize_only,
         derivadas_only=args.derivadas_only,
         sequential=args.sequential,
-    )
+    ) else 1)

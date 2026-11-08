@@ -115,13 +115,16 @@ def main() -> None:
 
     import run_all
 
-    run_all.main(
+    ok = run_all.main(
         scraper_only=args.scraper_only,
         normalize_only=args.normalize_only,
         derivadas_only=args.derivadas_only,
         sequential=args.sequential,
     )
+    if not ok:
+        sys.exit(1)  # faz o Databricks Job falhar de forma visível
 
 
 if __name__ == "__main__":
     main()
+

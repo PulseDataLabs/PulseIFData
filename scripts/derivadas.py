@@ -1,3 +1,5 @@
+import gzip
+import io
 import sys
 from pathlib import Path
 
@@ -10,6 +12,22 @@ from scripts.utils.ux import (
 )
 
 log = get_logger("derivadas")
+
+
+def _salvar_csv(df: pd.DataFrame, output_path: Path) -> None:
+    """
+    Grava CSV (ou CSV.GZ) de forma determinística: o gzip é escrito com mtime=0 e sem
+    nome embutido, então o mesmo conteúdo gera sempre os mesmos bytes e o git não
+    registra diferenças quando os dados não mudaram.
+    """
+    if str(output_path).endswith(".gz"):
+        with open(output_path, "wb") as raw, gzip.GzipFile(
+            filename="", mode="wb", fileobj=raw, mtime=0
+        ) as gz:
+            with io.TextIOWrapper(gz, encoding="utf-8", newline="") as txt:
+                df.to_csv(txt, index=False)
+    else:
+        df.to_csv(output_path, index=False, encoding="utf-8")
 
 COLUNAS_PADRAO = {
     "carteira": "carteira_credito",
@@ -49,7 +67,7 @@ def gerar_market_share(
     result = result.sort_values(["AnoMes", "market_share_pct"], ascending=[True, False])
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    result.to_csv(output_path, index=False, encoding="utf-8")
+    _salvar_csv(result, output_path)
     log.info(f"Market share: {len(result)} linhas → {output_path}")
     return result
 
@@ -89,7 +107,7 @@ def gerar_hhi(
     hhi = hhi.sort_values("AnoMes")
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    hhi.to_csv(output_path, index=False, encoding="utf-8")
+    _salvar_csv(hhi, output_path)
     log.info(f"HHI: {len(hhi)} trimestres → {output_path}")
     return hhi
 
@@ -117,7 +135,7 @@ def gerar_rankings(
     result = result.sort_values(["AnoMes", "ranking"])
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    result.to_csv(output_path, index=False, encoding="utf-8")
+    _salvar_csv(result, output_path)
     log.info(f"Rankings: {len(result)} linhas → {output_path}")
     return result
 
@@ -152,7 +170,7 @@ def gerar_variacoes(
     result = result.sort_values(["CodInst", "AnoMes"])
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    result.to_csv(output_path, index=False, encoding="utf-8")
+    _salvar_csv(result, output_path)
     log.info(f"Variações: {len(result)} linhas → {output_path}")
     return result
 
