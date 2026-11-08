@@ -67,16 +67,17 @@ def _pivotar_por_conta_pl(df: pl.DataFrame, mapping: dict[str, dict]) -> pl.Data
         pl.col("Conta").replace_strict(mapping_dict, default=pl.col("Conta")).alias("campo_semantico")
     )
 
-    group_cols = [c for c in ["CodInst", "AnoMes", "data_base", "TipoInstituicao",
-                               "NomeRelatorio", "NumeroRelatorio"]
+    group_cols = [c for c in ["CodInst", "AnoMes", "data_base", "TipoInstituicao"]
                   if c in df.columns]
+
+    df = df.unique(subset=group_cols + ["Conta"], keep="first")
 
     # Pivot de alta performance em Polars
     pivoted = df.pivot(
         on="campo_semantico",
         index=group_cols,
         values="Saldo_num",
-        aggregate_function="sum"
+        aggregate_function="first"
     )
 
     return pivoted.fill_null(0.0)
