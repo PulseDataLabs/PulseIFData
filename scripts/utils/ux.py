@@ -124,16 +124,19 @@ def print_fail(msg: str, elapsed: Optional[float] = None, icon: str = "fail") ->
     print(f"  {red(ICON[icon])}  {msg}{time_str}")
 
 
-def print_warn(msg: str, icon: str = "warn") -> None:
-    print(f"  {yellow(ICON[icon])}  {msg}")
+def print_warn(msg: str, elapsed: Optional[float] = None, icon: str = "warn") -> None:
+    time_str = f"  {dim(f'{elapsed:.1f}s')}" if elapsed is not None else ""
+    print(f"  {yellow(ICON[icon])}  {msg}{time_str}")
 
 
-def print_skip(msg: str, icon: str = "skip") -> None:
-    print(f"  {dim(ICON[icon])}  {msg}")
+def print_skip(msg: str, elapsed: Optional[float] = None, icon: str = "skip") -> None:
+    time_str = f"  {dim(f'{elapsed:.1f}s')}" if elapsed is not None else ""
+    print(f"  {dim(ICON[icon])}  {msg}{time_str}")
 
 
-def print_info(msg: str, icon: str = "info") -> None:
-    print(f"  {cyan(ICON[icon])}  {msg}")
+def print_info(msg: str, elapsed: Optional[float] = None, icon: str = "info") -> None:
+    time_str = f"  {dim(f'{elapsed:.1f}s')}" if elapsed is not None else ""
+    print(f"  {cyan(ICON[icon])}  {msg}{time_str}")
 
 
 def print_summary(
