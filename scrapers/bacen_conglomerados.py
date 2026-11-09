@@ -23,13 +23,30 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from scrapers.utils.base import BaseScraper
 
 
-def _try_download(session: requests.Session, yyyymm: str) -> bytes | None:
-    file_name = f"{yyyymm}CONGLOMERADO.zip"
-    url = f"https://www.bcb.gov.br/content/estabilidadefinanceira/relacao_instituicoes_funcionamento/Conglomerados/{file_name}"
-    resp = session.get(url, timeout=120)
-    if resp.status_code == 200:
-        return resp.content
-    return None
+def _try_download(session: requests.Session, ref_date: datetime.date) -> tuple[bytes | None, str]:
+    """
+    Tenta baixar o arquivo ZIP de conglomerados testando os formatos de nomenclatura do BACEN:
+    - MMYYYYCONGLOMERADO.zip (formato adotado a partir de 102026)
+    - YYYYMMCONGLOMERADO.zip (formato histórico anterior)
+    Retorna (content, nome_arquivo_encontrado) ou (None, "").
+    """
+    mmyyyy = ref_date.strftime("%m%Y")
+    yyyymm = ref_date.strftime("%Y%m")
+    
+    nomes_candidatos = [
+        f"{mmyyyy}CONGLOMERADO.zip",
+        f"{yyyymm}CONGLOMERADO.zip",
+    ]
+    
+    for file_name in nomes_candidatos:
+        url = f"https://www.bcb.gov.br/content/estabilidadefinanceira/relacao_instituicoes_funcionamento/Conglomerados/{file_name}"
+        try:
+            resp = session.get(url, timeout=120)
+            if resp.status_code == 200 and len(resp.content) > 1000:
+                return resp.content, file_name
+        except Exception:
+            continue
+    return None, ""
 
 
 class BacenConglomeradosScraper(BaseScraper):
@@ -57,18 +74,19 @@ class BacenConglomeradosScraper(BaseScraper):
         hoje = datetime.date.today()
         content = None
         ref = hoje
-        for meses_atras in (1, 2, 3):
+        arquivo_baixado = ""
+        for meses_atras in (0, 1, 2, 3):
             ref = hoje - relativedelta(months=meses_atras)
-            yyyymm = ref.strftime("%Y%m")
             t0 = time.time()
-            c = _try_download(session, yyyymm)
+            c, nome_arq = _try_download(session, ref)
             if c:
-                print_done(f"encontrado {yyyymm}CONGLOMERADO.zip", elapsed=time.time() - t0)
+                print_done(f"encontrado {nome_arq}", elapsed=time.time() - t0)
                 content = c
+                arquivo_baixado = nome_arq
                 break
-            print_warn(f"{yyyymm}CONGLOMERADO.zip não disponível", elapsed=time.time() - t0)
+            print_warn(f"{ref.strftime('%m/%Y')} não disponível", elapsed=time.time() - t0)
         if not content:
-            raise RuntimeError("Nenhum arquivo de conglomerados disponível nos últimos 3 meses.")
+            raise RuntimeError("Nenhum arquivo de conglomerados disponível nos últimos 4 meses.")
 
         # Extrai XLSX do ZIP em memória
         with zipfile.ZipFile(BytesIO(content)) as zf:
