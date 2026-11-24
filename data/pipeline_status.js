@@ -1,6 +1,6 @@
 window.PULSEIFDATA_PIPELINE_STATUS = {
-  "timestamp": "2026-11-23T18:58:41.196028",
-  "elapsed_seconds": 66.72732639312744,
+  "timestamp": "2026-11-24T17:35:38.155733",
+  "elapsed_seconds": 85.31587553024292,
   "status": "success",
   "summary": {
     "total": 20,
@@ -17,129 +17,129 @@ window.PULSEIFDATA_PIPELINE_STATUS = {
     },
     "bacen_ifdata_cadastro": {
       "status": "success",
-      "elapsed_seconds": 5.111282110214233,
+      "elapsed_seconds": 7.328891277313232,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     },
     "bacen_conglomerados": {
       "status": "success",
-      "elapsed_seconds": 2.471754312515259,
+      "elapsed_seconds": 3.0963828563690186,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     },
     "bacen_balancetes_bancos": {
       "status": "success",
-      "elapsed_seconds": 6.514441251754761,
+      "elapsed_seconds": 9.173280954360962,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     },
     "bacen_parcelas_capital_basileia": {
       "status": "success",
-      "elapsed_seconds": 4.348428010940552,
+      "elapsed_seconds": 5.1656670570373535,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     },
     "bacen_cambio_trimestre": {
       "status": "success",
-      "elapsed_seconds": 0.003526926040649414,
+      "elapsed_seconds": 0.0070950984954833984,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     },
     "bacen_credito_clientes_operacoes": {
       "status": "success",
-      "elapsed_seconds": 0.8634071350097656,
+      "elapsed_seconds": 1.1567344665527344,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     },
     "bacen_credito_instrumentos_financeiros": {
       "status": "success",
-      "elapsed_seconds": 0.803072452545166,
+      "elapsed_seconds": 0.9238440990447998,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     },
     "bacen_credito_indexador": {
       "status": "success",
-      "elapsed_seconds": 1.780407190322876,
+      "elapsed_seconds": 2.3176558017730713,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     },
     "bacen_credito_nivel_risco": {
       "status": "success",
-      "elapsed_seconds": 0.0036590099334716797,
+      "elapsed_seconds": 0.006280422210693359,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     },
     "bacen_ativo": {
       "status": "success",
-      "elapsed_seconds": 4.5080296993255615,
+      "elapsed_seconds": 5.716015100479126,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     },
     "bacen_credito_pj_modalidade_prazo": {
       "status": "success",
-      "elapsed_seconds": 6.510797739028931,
+      "elapsed_seconds": 8.15805697441101,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     },
     "bacen_credito_pj_porte": {
       "status": "success",
-      "elapsed_seconds": 1.3482213020324707,
+      "elapsed_seconds": 1.6332271099090576,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     },
     "bacen_credito_pf_modalidade_prazo": {
       "status": "success",
-      "elapsed_seconds": 5.075526714324951,
+      "elapsed_seconds": 5.809100151062012,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     },
     "bacen_credito_regiao": {
       "status": "success",
-      "elapsed_seconds": 0.7647285461425781,
+      "elapsed_seconds": 1.3669068813323975,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     },
     "bacen_credito_pj_cnae": {
       "status": "success",
-      "elapsed_seconds": 6.6313796043396,
+      "elapsed_seconds": 8.582100868225098,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     },
     "bacen_informacoes_capital": {
       "status": "success",
-      "elapsed_seconds": 2.018558979034424,
+      "elapsed_seconds": 2.1138992309570312,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     },
     "bacen_dre": {
       "status": "success",
-      "elapsed_seconds": 9.585130214691162,
+      "elapsed_seconds": 12.223076105117798,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     },
     "bacen_resumo": {
       "status": "success",
-      "elapsed_seconds": 2.0352344512939453,
+      "elapsed_seconds": 2.5291788578033447,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     },
     "bacen_segmentacao": {
       "status": "success",
-      "elapsed_seconds": 0.8903017044067383,
+      "elapsed_seconds": 0.60498046875,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     },
     "bacen_passivo": {
       "status": "success",
-      "elapsed_seconds": 5.458504915237427,
+      "elapsed_seconds": 7.402390003204346,
       "error": null,
-      "timestamp": "2026-11-23T18:58:41.196216"
+      "timestamp": "2026-11-24T17:35:38.155941"
     }
   },
   "drifts": {},
   "data_quality": {
     "status": "warning",
-    "timestamp": "2026-11-23T19:00:45.782632",
+    "timestamp": "2026-11-24T17:38:39.055940",
     "total_datasets": 17,
     "passed": 5,
     "warnings": 12,
